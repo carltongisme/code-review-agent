@@ -27,6 +27,14 @@
             <groupId>org.example</groupId>
             <artifactId>code-review-agent-domain</artifactId>
         </dependency>
+
+        <!-- Qdrant 向量数据库 Java 客户端（gRPC 传输） -->
+        <dependency>
+            <groupId>io.qdrant</groupId>
+            <artifactId>qdrant-client</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+
     </dependencies>
 
 </project>
