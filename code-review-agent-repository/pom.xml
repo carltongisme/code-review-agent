@@ -20,19 +20,15 @@
     <dependencies>
         <dependency>
             <groupId>org.example</groupId>
-            <artifactId>code-review-agent-common</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.example</groupId>
             <artifactId>code-review-agent-domain</artifactId>
+            <version>${revision}</version>
         </dependency>
 
         <!-- Qdrant 向量数据库 Java 客户端（gRPC 传输） -->
         <dependency>
             <groupId>io.qdrant</groupId>
-            <artifactId>qdrant-client</artifactId>
-            <version>1.9.0</version>
+            <artifactId>client</artifactId>
+            <version>1.18.1</version>
         </dependency>
 
     </dependencies>

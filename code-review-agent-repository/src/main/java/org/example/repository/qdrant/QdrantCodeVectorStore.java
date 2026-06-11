@@ -4,9 +4,10 @@ import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections.Distance;
 import io.qdrant.client.grpc.Collections.VectorParams;
 import io.qdrant.client.grpc.Points.PointStruct;
+import io.qdrant.client.grpc.JsonWithInt;
 import io.qdrant.client.grpc.Points.RetrievedPoint;
 import io.qdrant.client.grpc.Points.UpdateResult;
-import io.qdrant.client.grpc.Points.WithPayloadSelector;
+
 import org.example.domain.vector.CodeVectorEntity;
 import org.example.domain.vector.CodeVectorStore;
 import org.example.domain.vector.CodeVectorStoreException;
@@ -114,15 +115,14 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
             List<RetrievedPoint> results = qdrantClient.retrieveAsync(
                 properties.getCollectionName(),
                 List.of(id(pointId)),
-                WithPayloadSelector.newBuilder().setEnable(true).build(),
-                null  // 不需要返回向量，节省带宽
+                null
             ).get();
 
             if (results == null || results.isEmpty()) {
                 return Optional.empty();
             }
 
-            return Optional.of(mapToEntity(results.get(0)));
+            return Optional.of(mapToEntity(results.getFirst()));
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -182,7 +182,7 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
      * 因此返回的实体中 embedding 为 null。
      */
     private CodeVectorEntity mapToEntity(RetrievedPoint point) {
-        Map<String, com.google.protobuf.Value> payload = point.getPayloadMap();
+        Map<String, JsonWithInt.Value> payload = point.getPayloadMap();
 
         return CodeVectorEntity.builder()
             .coordinate(new PhysicalCoordinate(
@@ -197,8 +197,8 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
             .build();
     }
 
-    private static String nullSafeString(Map<String, com.google.protobuf.Value> map, String key) {
-        com.google.protobuf.Value v = map.get(key);
+    private static String nullSafeString(Map<String, JsonWithInt.Value> map, String key) {
+        JsonWithInt.Value v = map.get(key);
         return (v != null) ? v.getStringValue() : "";
     }
 }
