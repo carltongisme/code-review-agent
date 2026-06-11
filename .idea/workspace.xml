@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8e05c39d-d8a2-4988-982b-da29a4ddb966" name="Changes" comment="project init" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "carltongisme"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "git@github.com:carltongisme/code-review-agent.git",
+    "accountId": "16908de4-a917-481e-85f8-998ed8e1f1cc"
+  }
+}]]></component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="alwaysUpdateSnapshots" value="true" />
+      </MavenGeneralSettings>
+    </option>
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="vmOptionsForImporter" value="-Xmx5000m" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0000011660239452" />
+      <entry key="MS500" value="1.0725373510903498" />
+      <entry key="S2" value="1.7990734682619647" />
+      <entry key="S5" value="2.3737586874825154" />
+      <entry key="S10" value="2.655148003558422" />
+      <entry key="S30" value="2.877116127227863" />
+      <entry key="S60" value="2.93750537396214" />
+      <entry key="M2" value="2.968484693953571" />
+      <entry key="M5" value="2.9873289315818363" />
+      <entry key="M10" value="2.9936538276477718" />
+      <entry key="M15" value="2.995890650295852" />
+      <entry key="M30" value="3.063112548383539" />
+      <entry key="H1" value="4.505422703397075" />
+      <entry key="H2" value="10.254870554802535" />
+      <entry key="H4" value="18.93179657649191" />
+      <entry key="D1" value="33.6964512383914" />
+      <entry key="W1" value="37.35007921554326" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="3.254801629079232E-165" />
+      <entry key="S60" value="1.548313732965426E-82" />
+      <entry key="M2" value="3.6275571463455075E-41" />
+      <entry key="M5" value="2.5000529442652904E-16" />
+      <entry key="M10" value="4.8767199451301004E-8" />
+      <entry key="M15" value="2.852387935274016E-5" />
+      <entry key="M30" value="0.01680462184057488" />
+      <entry key="H1" value="0.4093368132925612" />
+      <entry key="H2" value="2.0224113654440825" />
+      <entry key="H4" value="4.496663353998943" />
+      <entry key="D1" value="8.75270092538016" />
+      <entry key="W1" value="9.81147785157376" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.946058757523261" />
+      <entry key="MS500" value="1.0607362894032675" />
+      <entry key="S2" value="1.7936577919259689" />
+      <entry key="S5" value="2.3707239637183437" />
+      <entry key="S10" value="2.6534111887184832" />
+      <entry key="S30" value="2.8764787116730575" />
+      <entry key="S60" value="2.93717865984323" />
+      <entry key="M2" value="2.9683192792945197" />
+      <entry key="M5" value="2.987262264557696" />
+      <entry key="M10" value="2.9936204586623982" />
+      <entry key="M15" value="2.9958968394188443" />
+      <entry key="M30" value="3.079894777799496" />
+      <entry key="H1" value="4.914615847947049" />
+      <entry key="H2" value="12.276936273161375" />
+      <entry key="H4" value="23.42807636442057" />
+      <entry key="D1" value="42.44902766625697" />
+      <entry key="W1" value="47.16153712645066" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5,
+  "fromUser": false
+}]]></component>
+  <component name="ProjectId" id="3EzGU8WQhta2h61cgQggl7bCubq" />
+  <component name="ProjectViewState">
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "onboarding.tips.debug.path": "E:/IdeaProjects/code-review-agent/code-review-agent-domain/src/main/java/org/example/Main.java",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "Errors",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.25134.95" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.25134.95" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8e05c39d-d8a2-4988-982b-da29a4ddb966" name="Changes" comment="" />
+      <created>1781173998578</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1781173998578</updated>
+      <workItem from="1781174000494" duration="6274000" />
+    </task>
+    <task id="LOCAL-00001" summary="project init">
+      <option name="closed" value="true" />
+      <created>1781176154937</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1781176154937</updated>
+    </task>
+    <task id="LOCAL-00002" summary="project init">
+      <option name="closed" value="true" />
+      <created>1781176178483</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1781176178483</updated>
+    </task>
+    <task id="LOCAL-00003" summary="project init">
+      <option name="closed" value="true" />
+      <created>1781176341572</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1781176341572</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="project init" />
+    <option name="LAST_COMMIT_MESSAGE" value="project init" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/Main.java</url>
+          <line>14</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/code-review-agent-repository/src/main/java/org/example/repository/Main.java</url>
+          <line>14</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/code-review-agent-common/src/main/java/org/example/common/Main.java</url>
+          <line>14</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/code-review-agent-domain/src/main/java/org/example/domain/Main.java</url>
+          <line>14</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
