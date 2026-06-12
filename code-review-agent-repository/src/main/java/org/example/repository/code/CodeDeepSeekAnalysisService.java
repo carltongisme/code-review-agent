@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.domain.code.service.CodeAnalysisService;
 import org.example.repository.deepseek.DeepSeekClient;
 import org.example.repository.deepseek.dto.DeepSeekChatMessage;
+import org.springframework.stereotype.Service;
 
 /**
  * 基于 DeepSeek 的 {@link CodeAnalysisService} 实现。
  */
 @Slf4j
+@Service
 public class CodeDeepSeekAnalysisService implements CodeAnalysisService {
 
     private static final String SYSTEM_PROMPT =

@@ -9,6 +9,7 @@ import org.example.domain.code.parser.JavaCodeParser;
 import org.example.domain.code.service.CallGraphIndex;
 import org.example.domain.code.service.CodeAnalysisService;
 import org.example.domain.code.service.CodeRepository;
+import org.example.domain.code.service.CodeReviewService;
 import org.example.domain.embedding.EmbeddingService;
 import org.springframework.stereotype.Service;
 
@@ -31,13 +32,16 @@ public class CodeDomainService {
     private static final int IMPORT_PARALLELISM = 4;
 
     @Resource
+    private CodeRepository codeRepository;
+
+    @Resource
+    private CodeReviewService codeReviewService;
+
+    @Resource
     private CodeAnalysisService codeAnalysisService;
 
     @Resource
     private EmbeddingService embeddingService;
-
-    @Resource
-    private CodeRepository codeRepository;
 
     @Resource
     private JavaCodeParser javaCodeParser;

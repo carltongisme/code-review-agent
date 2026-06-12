@@ -9,6 +9,7 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import org.example.domain.code.model.ExtractedMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * 解析 Java 源码的抽象语法树（AST），提取每个方法的代码块及其调用关系。
  */
+@Component
 public class JavaCodeParser {
 
     private static final Logger log = LoggerFactory.getLogger(JavaCodeParser.class);

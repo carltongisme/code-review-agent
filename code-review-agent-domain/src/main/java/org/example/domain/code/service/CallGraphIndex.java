@@ -2,6 +2,7 @@ package org.example.domain.code.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   index: "UserService::authenticate" → {"AuthController::login", "ApiGateway::handle"}
  * </pre>
  */
+@Component
 public class CallGraphIndex {
 
     private static final Logger log = LoggerFactory.getLogger(CallGraphIndex.class);

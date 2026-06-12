@@ -2,6 +2,8 @@ package org.example.repository;
 
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
+
+import org.example.repository.code.functioncall.FunctionCallDispatcher;
 import org.example.repository.deepseek.DeepSeekClient;
 import org.example.repository.code.CodeDeepSeekAnalysisService;
 import org.example.repository.deepseek.DeepSeekProperties;
@@ -11,7 +13,7 @@ import org.example.repository.embedding.DashScopeEmbeddingProperties;
 import org.example.domain.code.parser.JavaCodeParser;
 import org.example.domain.code.service.CallGraphIndex;
 import org.example.repository.code.CodeQdrantRepository;
-import org.example.repository.code.CodeReviewService;
+import org.example.repository.code.CodeReviewServiceImpl;
 import org.example.repository.github.GitHubClient;
 import org.example.repository.github.GitHubProperties;
 import org.example.repository.qdrant.QdrantProperties;
@@ -84,24 +86,8 @@ public class RepositoryContext {
         return new AliyunEmbeddingService(client);
     }
 
-    // ── AST 解析 + 调用图 ──
 
-    @Bean
-    public JavaCodeParser javaCodeParser() {
-        return new JavaCodeParser();
-    }
-
-    @Bean
-    public CallGraphIndex callGraphIndex() {
-        return new CallGraphIndex();
-    }
-
-    // ── GitHub + 审查 ──
-
-    @Bean
-    public CodeReviewService codeReviewService() {
-        return new CodeReviewService();
-    }
+    // ── GitHub ──
 
     @Bean
     public GitHubClient gitHubClient(GitHubProperties properties) {
