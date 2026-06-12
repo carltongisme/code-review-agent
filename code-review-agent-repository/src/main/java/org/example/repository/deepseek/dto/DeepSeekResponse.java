@@ -28,4 +28,25 @@ public class DeepSeekResponse {
      * API 支持传入参数 n 来让模型一次性生成多个不同的候选答案。在工程中为了省钱，通常 n=1，所以数组里通常只有一个元素。
      */
     private List<DeepSeekChoice> choices;
+
+    /**
+     * 本次请求的 token 用量统计。
+     */
+    private Usage usage;
+
+    // ====================================== class ================================================
+
+    @Data
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Usage {
+        /** 提示 token 数（含缓存命中 + 未命中） */
+        private int promptTokens;
+
+        /** 生成的补全 token 数 */
+        private int completionTokens;
+
+        /** 请求使用的总 token 数 */
+        private int totalTokens;
+    }
 }
