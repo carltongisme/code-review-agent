@@ -21,7 +21,14 @@
         <dependency>
             <groupId>org.example</groupId>
             <artifactId>code-review-agent-common</artifactId>
-            <version>${revision}</version>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- JavaParser: AST 语法树解析，提取方法级代码块及调用关系 -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.26.1</version>
         </dependency>
     </dependencies>
 

@@ -26,11 +26,13 @@
         <dependency>
             <groupId>org.example</groupId>
             <artifactId>code-review-agent-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.example</groupId>
             <artifactId>code-review-agent-domain</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
     </dependencies>
