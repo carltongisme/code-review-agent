@@ -41,10 +41,7 @@ public class FunctionCallTools {
             String projectId,
             @FunctionCallParam(name = "methodSignature",
                 description = "方法签名，格式：ClassName::methodName(paramTypes)，如 UserService::login(String,String)")
-            String args) {
-
-        String methodSignature = extractJsonField(args, "methodSignature");
-        if (methodSignature == null) return "错误: 缺少 methodSignature 参数";
+            String methodSignature) {
 
         Set<String> callers = callGraphIndex.findCallers(projectId, methodSignature);
         if (callers.isEmpty()) return "方法 " + methodSignature + " 无上游调用方";
@@ -67,11 +64,8 @@ public class FunctionCallTools {
     @FunctionCall(name = "lookup_callees", description = "查找指定方法体内调用了哪些其他方法。用于评估修改对下游的影响。")
     public String lookupCallees(
             String projectId,
-            @FunctionCallParam(name = "methodSignature", description = "方法签名，格式：ClassName::methodName(paramTypes)") String args
+            @FunctionCallParam(name = "methodSignature", description = "方法签名，格式：ClassName::methodName(paramTypes)") String methodSignature
     ) {
-
-        String methodSignature = extractJsonField(args, "methodSignature");
-        if (methodSignature == null) return "错误: 缺少 methodSignature 参数";
 
         String[] parts = methodSignature.split("::", 2);
         if (parts.length < 2) return "错误: 格式应为 ClassName::methodName(paramTypes)";
@@ -92,13 +86,11 @@ public class FunctionCallTools {
     public String lookupCode(
             String projectId,
             @FunctionCallParam(name = "filePath", description = "文件路径")
-            String args) {
-
-        String filePath = extractJsonField(args, "filePath");
-        String className = extractJsonField(args, "className");
-        String methodSignature = extractJsonField(args, "methodSignature");
-        if (filePath == null || className == null || methodSignature == null)
-            return "错误: 缺少参数";
+            String filePath,
+            @FunctionCallParam(name = "className", description = "类名（含包名），如 org.example.UserService")
+            String className,
+            @FunctionCallParam(name = "methodSignature", description = "方法签名（含参数类型），如 login(String,String)")
+            String methodSignature) {
 
         return codeRepository.searchPhysical(
             new CodeDomainPhysical(projectId, filePath, className, methodSignature))
@@ -112,10 +104,7 @@ public class FunctionCallTools {
             String projectId,
             @FunctionCallParam(name = "query",
                 description = "自然语言描述，如\"查找认证失败处理逻辑\"")
-            String args) {
-
-        String query = extractJsonField(args, "query");
-        if (query == null) return "错误: 缺少 query 参数";
+            String query) {
 
         List<Float> queryEmbedding = embeddingService.embed(query);
         List<CodeDomain> results = codeRepository.searchSimilar(queryEmbedding, 5, projectId);
@@ -128,12 +117,5 @@ public class FunctionCallTools {
                 .append(" → ").append(entity.getMethodPurpose()).append("\n");
         }
         return sb.toString();
-    }
-
-    static String extractJsonField(String jsonLike, String fieldName) {
-        java.util.regex.Matcher m = java.util.regex.Pattern
-            .compile("\"" + fieldName + "\"\\s*:\\s*\"([^\"]*)\"")
-            .matcher(jsonLike);
-        return m.find() ? m.group(1) : null;
     }
 }
