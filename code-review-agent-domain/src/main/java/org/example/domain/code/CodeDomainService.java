@@ -4,12 +4,14 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.code.domain.CodeDomain;
 import org.example.domain.code.domain.CodeDomainPhysical;
+import org.example.domain.code.model.CodeReviewResult;
 import org.example.domain.code.model.ExtractedMethod;
 import org.example.domain.code.parser.JavaCodeParser;
 import org.example.domain.code.service.CallGraphIndex;
 import org.example.domain.code.service.CodeAnalysisService;
 import org.example.domain.code.service.CodeRepository;
 import org.example.domain.code.service.CodeReviewService;
+import org.example.domain.code.service.CodeReviewSubmitService;
 import org.example.domain.embedding.EmbeddingService;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +50,9 @@ public class CodeDomainService {
 
     @Resource
     private CallGraphIndex callGraphIndex;
+
+    @Resource
+    private CodeReviewSubmitService codeReviewSubmitService;
 
     /**
      * 处理单个方法：DeepSeek 解析含义 → 阿里云向量化 → Qdrant 存储。
@@ -140,6 +145,22 @@ public class CodeDomainService {
 
         log.info("全量导入完成: projectId={}, 方法数={}", projectId, totalMethods);
         return totalMethods;
+    }
+
+    /**
+     * 审查并提交：执行 LLM 审查后将结论提交到 Git 平台。
+     * <p>
+     * 封装完整流程，API 层只需调用此方法，无需感知底层 GitHub API。
+     *
+     * @param projectId 项目 ID（格式 "owner/repo"）
+     * @param prNumber  PR 编号
+     * @param diff      变更内容
+     * @return 审查结果
+     */
+    public CodeReviewResult reviewAndSubmit(String projectId, int prNumber, String diff) {
+        CodeReviewResult result = codeReviewService.review(projectId, diff);
+        codeReviewSubmitService.submitReview(projectId, prNumber, result);
+        return result;
     }
 }
 

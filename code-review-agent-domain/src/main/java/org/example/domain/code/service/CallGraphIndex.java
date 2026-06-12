@@ -143,4 +143,44 @@ public class CallGraphIndex {
         callerIndex.values().forEach(callers -> callers.removeIf(c -> c.equals(key)));
         log.debug("索引移除: {}", key);
     }
+
+    /**
+     * 按文件前缀清理索引 —— 删除文件中所有方法的调用关系。
+     * <p>
+     * 合并到 master 后某文件被删除时调用，做 best-effort 类名后缀匹配。
+     *
+     * @param projectId  项目 ID
+     * @param className  类名（不含包名，如 "UserService"），做后缀匹配
+     */
+    public void removeCallersByFilePrefix(String projectId, String className) {
+        String prefix = projectId + "::";
+        Set<String> toRemove = new HashSet<>();
+
+        // 找到所有 key 格式为 projectId::*::className::* 的条目
+        for (String key : callerIndex.keySet()) {
+            if (!key.startsWith(prefix)) continue;
+            // key 格式: projectId::scopeOrClass::methodName
+            // 检查倒数第二个 "::" 之间的部分是否匹配 className
+            String afterProject = key.substring(prefix.length());
+            int lastColon = afterProject.lastIndexOf("::");
+            if (lastColon < 0) continue;
+            String keyClassName = afterProject.substring(0, lastColon);
+            if (keyClassName.equalsIgnoreCase(className)
+                || keyClassName.endsWith("." + className)) {
+                toRemove.add(key);
+            }
+        }
+
+        // 移除索引条目
+        toRemove.forEach(callerIndex::remove);
+
+        // 从所有调用方集合中移除对被删方法的引用
+        if (!toRemove.isEmpty()) {
+            callerIndex.values().forEach(callers ->
+                callers.removeIf(c -> toRemove.contains(c)));
+        }
+
+        log.info("索引清理完成: projectId={}, className={}, 移除条目={}",
+            projectId, className, toRemove.size());
+    }
 }
