@@ -2,6 +2,7 @@ package org.example.repository.qdrant;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Qdrant 连接配置。
@@ -9,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * 所有属性均可通过 application.properties 中的 {@code qdrant.*} 前缀覆盖。
  */
 @Data
+@Configuration
 @ConfigurationProperties(prefix = "qdrant")
 public class QdrantProperties {
 

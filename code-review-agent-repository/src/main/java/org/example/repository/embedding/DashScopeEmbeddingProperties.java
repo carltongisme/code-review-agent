@@ -2,6 +2,7 @@ package org.example.repository.embedding;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
@@ -11,6 +12,7 @@ import java.time.Duration;
  * 所有属性均可通过 application.properties 中的 {@code dashscope.embedding.*} 前缀覆盖。
  */
 @Data
+@Configuration
 @ConfigurationProperties(prefix = "dashscope.embedding")
 public class DashScopeEmbeddingProperties {
 
