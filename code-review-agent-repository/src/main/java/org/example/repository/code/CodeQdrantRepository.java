@@ -18,8 +18,6 @@ import org.example.domain.code.domain.CodeDomainPhysical;
 import org.example.repository.qdrant.QdrantProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +38,6 @@ import static io.qdrant.client.WithPayloadSelectorFactory.enable;
  * <p>
  * 存储时硬拼接物理坐标到向量文本中，确保 LLM 检索结果自包含定位信息。
  */
-@Service
 public class CodeQdrantRepository implements CodeRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CodeQdrantRepository.class);
