@@ -29,7 +29,7 @@ public interface CodeRepository {
      * @throws CodeServiceException 存储失败时抛出
      * @throws IllegalArgumentException 如果 entity 或其关键字段为 null
      */
-    void store(CodeDomain entity) throws CodeServiceException;
+    void store(CodeDomain entity, String projectId) throws CodeServiceException;
 
     /**
      * 根据物理坐标精确查询代码块。
@@ -53,5 +53,12 @@ public interface CodeRepository {
      * @return 按相似度降序排列的实体列表（不含向量），无结果时返回空列表
      * @throws CodeServiceException 检索失败时抛出
      */
-    List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit) throws CodeServiceException;
+    /**
+     * 根据向量相似度检索，可指定按项目 ID 过滤。
+     *
+     * @param queryEmbedding 查询向量
+     * @param limit          返回的最大结果数
+     * @param projectId      项目 ID，为 null 时不按项目过滤（跨项目搜索）
+     */
+    List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit, String projectId) throws CodeServiceException;
 }

@@ -3,6 +3,7 @@ package org.example.repository.code;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections.Distance;
 import io.qdrant.client.grpc.Collections.VectorParams;
+import io.qdrant.client.grpc.Common.Filter;
 import io.qdrant.client.grpc.Points.PointStruct;
 import io.qdrant.client.grpc.JsonWithInt;
 import io.qdrant.client.grpc.Points.RetrievedPoint;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import static io.qdrant.client.ConditionFactory.matchKeyword;
 import static io.qdrant.client.PointIdFactory.id;
 import static io.qdrant.client.ValueFactory.value;
 import static io.qdrant.client.VectorsFactory.vectors;
@@ -44,6 +46,7 @@ public class CodeQdrantRepository implements CodeRepository {
     private static final Logger log = LoggerFactory.getLogger(CodeQdrantRepository.class);
 
     // ── Payload 字段名常量 ──
+    static final String PAYLOAD_PROJECT_ID = "project_id";
     static final String PAYLOAD_FILE_PATH = "file_path";
     static final String PAYLOAD_CLASS_NAME = "class_name";
     static final String PAYLOAD_METHOD_SIGNATURE = "method_signature";
@@ -65,7 +68,7 @@ public class CodeQdrantRepository implements CodeRepository {
     // ── CodeVectorStore 接口实现 ──
 
     @Override
-    public void store(CodeDomain entity) throws CodeServiceException {
+    public void store(CodeDomain entity, String projectId) throws CodeServiceException {
         ensureCollectionExists();
 
         CodeDomainPhysical coord = entity.getCoordinate();
@@ -77,12 +80,13 @@ public class CodeQdrantRepository implements CodeRepository {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("存储代码向量: id={}, coord={}", pointId, coord);
+            log.debug("存储代码向量: projectId={}, id={}, coord={}", projectId, pointId, coord);
         }
 
         PointStruct point = PointStruct.newBuilder()
             .setId(id(pointId))
             .setVectors(vectors(entity.getEmbedding()))
+            .putPayload(PAYLOAD_PROJECT_ID, value(projectId))
             .putPayload(PAYLOAD_FILE_PATH, value(coord.filePath()))
             .putPayload(PAYLOAD_CLASS_NAME, value(coord.className()))
             .putPayload(PAYLOAD_METHOD_SIGNATURE, value(coord.methodSignature()))
@@ -140,16 +144,23 @@ public class CodeQdrantRepository implements CodeRepository {
     }
 
     @Override
-    public List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit)
+    public List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit, String projectId)
         throws CodeServiceException {
         ensureCollectionExists();
 
-        SearchPoints request = SearchPoints.newBuilder()
+        SearchPoints.Builder builder = SearchPoints.newBuilder()
             .setCollectionName(properties.getCollectionName())
             .addAllVector(queryEmbedding)
             .setLimit(limit)
-            .setWithPayload(enable(true))
-            .build();
+            .setWithPayload(enable(true));
+
+        if (projectId != null && !projectId.isBlank()) {
+            builder.setFilter(Filter.newBuilder()
+                .addMust(matchKeyword(PAYLOAD_PROJECT_ID, projectId))
+                .build());
+        }
+
+        SearchPoints request = builder.build();
 
         try {
             List<ScoredPoint> results = qdrantClient.searchAsync(request).get();
@@ -233,6 +244,7 @@ public class CodeQdrantRepository implements CodeRepository {
     private CodeDomain fromPayloadMap(Map<String, JsonWithInt.Value> payload) {
         return CodeDomain.builder()
             .coordinate(new CodeDomainPhysical(
+                nullSafeString(payload, PAYLOAD_PROJECT_ID),
                 payload.get(PAYLOAD_FILE_PATH).getStringValue(),
                 payload.get(PAYLOAD_CLASS_NAME).getStringValue(),
                 payload.get(PAYLOAD_METHOD_SIGNATURE).getStringValue()

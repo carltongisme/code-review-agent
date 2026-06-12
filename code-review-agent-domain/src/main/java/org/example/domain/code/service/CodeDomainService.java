@@ -28,7 +28,7 @@ public class CodeDomainService {
      * 处理单个方法：DeepSeek 解析含义 → 阿里云向量化 → Qdrant 存储。
      *
      * @param sourceCode 方法完整源码
-     * @param coordinate 物理坐标（文件路径 + 类名 + 方法签名）
+     * @param coordinate 物理坐标（含 projectId）
      * @return 已存储的代码实体
      */
     public CodeDomain store(String sourceCode, CodeDomainPhysical coordinate) {
@@ -45,8 +45,8 @@ public class CodeDomainService {
         // 3. 向量化
         entity.setEmbedding(embeddingService.embed(entity.buildVectorText()));
 
-        // 4. 存储
-        codeRepository.store(entity);
+        // 4. 存储（projectId 从 coordinate 中提取）
+        codeRepository.store(entity, coordinate.projectId());
 
         log.info("流水线完成: {}", coordinate);
         return entity;

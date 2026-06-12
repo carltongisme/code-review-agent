@@ -13,6 +13,7 @@ import java.util.UUID;
  * </ul>
  */
 public record CodeDomainPhysical(
+    String projectId,
     String filePath,
     String className,
     // 方法签名也会带参数。例如 login(String,String)
@@ -21,21 +22,21 @@ public record CodeDomainPhysical(
 
     /**
      * 生成确定性 UUID（基于 UUID v3/MD5 风格）。
-     * 使用 "filePath::className::methodSignature" 作为命名空间输入，
+     * 使用 "projectId::filePath::className::methodSignature" 作为命名空间输入，
      * 保证同一物理坐标在任何时间、任何环境都生成相同的 UUID。
      *
      * @return 确定性 UUID
      */
     public UUID toDeterministicId() {
-        String key = filePath + "::" + className + "::" + methodSignature;
+        String key = projectId + "::" + filePath + "::" + className + "::" + methodSignature;
         return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * 用于日志和展示的简短描述，格式：【文件路径】【类名】【方法签名】
+     * 用于日志和展示的简短描述，格式：【项目ID】【文件路径】【类名】【方法签名】
      */
     @Override
     public String toString() {
-        return String.format("【%s】【%s】【%s】", filePath, className, methodSignature);
+        return String.format("【%s】【%s】【%s】【%s】", projectId, filePath, className, methodSignature);
     }
 }
