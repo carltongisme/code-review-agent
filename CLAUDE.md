@@ -4,12 +4,11 @@
 
 ## 项目职责
 
-本项目在于实现一个 Code Review Agent。
-1. 初始项目代码全量导入向量数据库
-2. 当一个仓库（gitlab/github）的有发生变更的时候，会请求我提供的http接口进行代码审查。
-3. 代码审查的过程中，需要关注到函数改动带来的影响（例如说有哪个上游函数调用到这个函数，如果大模型 LLM 需要知道上游函数是做什么的，你需要根据物理坐标去反查（Function Call）；同理下游函数也是）
-4. 最后将大模型 LLM 的审查意见提交到对应仓库的 comment（通过/拒绝+拒绝原因）
-5. 当通过并 merge 到 master 分支后，再主动更新向量数据库。
+本项目实现一个 Code Review Agent，核心流程如下：
+
+1. **初始导入**：clone 仓库 → AST 解析所有 Java 方法 → DeepSeek 语义分析 → 阿里云 DashScope 向量化 → Qdrant 存储
+2. **代码审查**：GitHub Webhook 收到 PR 事件 → LLM 审查变更（含 Function Call 上下游影响分析）→ 评审结论自动提交到 GitHub
+3. **合并同步**：PR merge 到 master 后 → 更新向量库 + 清理调用图索引
 
 ## 构建 / 运行命令
 
