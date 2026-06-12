@@ -4,7 +4,6 @@ import com.alibaba.dashscope.embeddings.TextEmbedding;
 import com.alibaba.dashscope.embeddings.TextEmbeddingParam;
 import com.alibaba.dashscope.embeddings.TextEmbeddingResult;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
@@ -24,15 +23,6 @@ public class DashScopeEmbeddingClient {
 
     public DashScopeEmbeddingClient(DashScopeEmbeddingProperties properties) {
         this.properties = properties;
-
-        // SDK API Key
-        System.setProperty("DASHSCOPE_API_KEY", properties.getApiKey());
-
-        // 支持自定义 base URL（新加坡地域等）
-        if (properties.getBaseUrl() != null && !properties.getBaseUrl().isBlank()) {
-            Constants.baseHttpApiUrl = properties.getBaseUrl();
-        }
-
         this.textEmbedding = new TextEmbedding();
     }
 
@@ -49,6 +39,7 @@ public class DashScopeEmbeddingClient {
             : TextEmbeddingParam.TextType.DOCUMENT;
 
         TextEmbeddingParam param = TextEmbeddingParam.builder()
+            .apiKey(properties.getApiKey())
             .model(properties.getModel())
             .texts(Collections.singletonList(text))
             .dimension(properties.getDimension())

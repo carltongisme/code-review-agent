@@ -44,16 +44,6 @@ public interface CodeRepository {
     Optional<CodeDomain> searchPhysical(CodeDomainPhysical coordinate) throws CodeServiceException;
 
     /**
-     * 根据向量相似度检索最相近的代码块。
-     * <p>
-     * 用于语义搜索场景，结果按相似度从高到低排列。
-     *
-     * @param queryEmbedding 查询向量
-     * @param limit          返回的最大结果数
-     * @return 按相似度降序排列的实体列表（不含向量），无结果时返回空列表
-     * @throws CodeServiceException 检索失败时抛出
-     */
-    /**
      * 根据向量相似度检索，可指定按项目 ID 过滤。
      *
      * @param queryEmbedding 查询向量

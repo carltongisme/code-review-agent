@@ -2,7 +2,6 @@ package org.example.repository.deepseek;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
@@ -12,7 +11,6 @@ import java.time.Duration;
  * 所有属性均可通过 application.properties 中的 {@code deepseek.*} 前缀覆盖。
  */
 @Data
-@Configuration
 @ConfigurationProperties(prefix = "deepseek")
 public class DeepSeekProperties {
 

@@ -2,7 +2,6 @@ package org.example.repository.qdrant;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * Qdrant 连接配置。
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
  * 所有属性均可通过 application.properties 中的 {@code qdrant.*} 前缀覆盖。
  */
 @Data
-@Configuration
 @ConfigurationProperties(prefix = "qdrant")
 public class QdrantProperties {
 
@@ -29,6 +27,6 @@ public class QdrantProperties {
     /** Qdrant 集合名称 */
     private String collectionName = "code_review_agent";
 
-    /** 向量维度，需与 embedding 模型输出维度一致，默认 1536 */
-    private int vectorSize = 1536;
+    /** 向量维度，需与 embedding 模型输出维度一致（text-embedding-v4 默认 1024） */
+    private int vectorSize = 1024;
 }
