@@ -2,9 +2,10 @@ package org.example.repository.embedding;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
+
+import com.alibaba.dashscope.embeddings.TextEmbedding;
 
 /**
  * 阿里云 DashScope Embedding API 配置。
@@ -12,7 +13,6 @@ import java.time.Duration;
  * 所有属性均可通过 application.properties 中的 {@code dashscope.embedding.*} 前缀覆盖。
  */
 @Data
-@Configuration
 @ConfigurationProperties(prefix = "dashscope.embedding")
 public class DashScopeEmbeddingProperties {
 
@@ -22,10 +22,13 @@ public class DashScopeEmbeddingProperties {
     /** API Key（必填） */
     private String apiKey;
 
-    /** 模型名称，text-embedding-v2 输出 1536 维 */
-    private String model = "text-embedding-v2";
+    /** 模型名称，text-embedding-v4 输出维度可配 */
+    private String model = TextEmbedding.Models.TEXT_EMBEDDING_V4;
 
-    /** 文本类型：document 或 query */
+    /** 向量维度，text-embedding-v4 默认 1024 */
+    private int dimension = 1024;
+
+    /** 文本类型：query（查询）或 document（文档，默认） */
     private String textType = "document";
 
     /** 连接超时 */
