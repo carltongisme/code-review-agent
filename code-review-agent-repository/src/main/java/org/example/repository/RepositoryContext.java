@@ -4,7 +4,7 @@ import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import org.example.repository.deepseek.DeepSeekClient;
 import org.example.repository.deepseek.DeepSeekProperties;
-import org.example.repository.qdrant.QdrantCodeVectorStore;
+import org.example.repository.qdrant.QdrantCodeRepositoryImpl;
 import org.example.repository.qdrant.QdrantProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -37,10 +37,10 @@ public class RepositoryContext {
     }
 
     @Bean
-    public QdrantCodeVectorStore qdrantCodeVectorStore(
+    public QdrantCodeRepositoryImpl qdrantCodeVectorStore(
             QdrantClient qdrantClient,
             QdrantProperties properties) {
-        return new QdrantCodeVectorStore(qdrantClient, properties);
+        return new QdrantCodeRepositoryImpl(qdrantClient, properties);
     }
 
     // ── DeepSeek ──

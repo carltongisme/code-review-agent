@@ -1,4 +1,4 @@
-package org.example.domain.vector;
+package org.example.domain.code.domain;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -12,9 +12,10 @@ import java.util.UUID;
  *   <li>按坐标精确检索已存储的代码块</li>
  * </ul>
  */
-public record PhysicalCoordinate(
+public record CodeDomainPhysical(
     String filePath,
     String className,
+    // 方法签名也会带参数。例如 login(String,String)
     String methodSignature
 ) {
 

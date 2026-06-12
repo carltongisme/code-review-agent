@@ -1,6 +1,11 @@
-package org.example.domain.vector;
+package org.example.domain.code.service;
 
+import java.util.List;
 import java.util.Optional;
+
+import org.example.domain.code.exception.CodeServiceException;
+import org.example.domain.code.domain.CodeDomainPhysical;
+import org.example.domain.code.domain.CodeDomain;
 
 /**
  * 代码向量存储接口 —— 将方法级代码块持久化到向量数据库。
@@ -13,8 +18,7 @@ import java.util.Optional;
  *       用于 LLM 需要定位具体代码时使用。</li>
  * </ol>
  */
-public interface CodeVectorStore {
-
+public interface CodeRepository {
     /**
      * 将已处理好的代码块存入向量数据库。
      * <p>
@@ -22,10 +26,10 @@ public interface CodeVectorStore {
      * 同一物理坐标的方法无论调用多少次 store，Qdrant 中最多只有一条记录。
      *
      * @param entity 包含物理坐标、方法用途、源代码和向量的实体
-     * @throws CodeVectorStoreException 存储失败时抛出
+     * @throws CodeServiceException 存储失败时抛出
      * @throws IllegalArgumentException 如果 entity 或其关键字段为 null
      */
-    void store(CodeVectorEntity entity) throws CodeVectorStoreException;
+    void store(CodeDomain entity) throws CodeServiceException;
 
     /**
      * 根据物理坐标精确查询代码块。
@@ -35,7 +39,19 @@ public interface CodeVectorStore {
      *
      * @param coordinate 文件路径 + 类名 + 方法签名
      * @return 若存在则返回实体（不含向量），否则返回 Optional.empty()
-     * @throws CodeVectorStoreException 查询失败时抛出
+     * @throws CodeServiceException 查询失败时抛出
      */
-    Optional<CodeVectorEntity> findByPhysicalCoordinate(PhysicalCoordinate coordinate) throws CodeVectorStoreException;
+    Optional<CodeDomain> searchPhysical(CodeDomainPhysical coordinate) throws CodeServiceException;
+
+    /**
+     * 根据向量相似度检索最相近的代码块。
+     * <p>
+     * 用于语义搜索场景，结果按相似度从高到低排列。
+     *
+     * @param queryEmbedding 查询向量
+     * @param limit          返回的最大结果数
+     * @return 按相似度降序排列的实体列表（不含向量），无结果时返回空列表
+     * @throws CodeServiceException 检索失败时抛出
+     */
+    List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit) throws CodeServiceException;
 }

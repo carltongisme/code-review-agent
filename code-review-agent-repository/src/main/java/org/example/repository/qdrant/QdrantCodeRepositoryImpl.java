@@ -6,14 +6,17 @@ import io.qdrant.client.grpc.Collections.VectorParams;
 import io.qdrant.client.grpc.Points.PointStruct;
 import io.qdrant.client.grpc.JsonWithInt;
 import io.qdrant.client.grpc.Points.RetrievedPoint;
+import io.qdrant.client.grpc.Points.ScoredPoint;
+import io.qdrant.client.grpc.Points.SearchPoints;
 import io.qdrant.client.grpc.Points.UpdateResult;
 
-import org.example.domain.vector.CodeVectorEntity;
-import org.example.domain.vector.CodeVectorStore;
-import org.example.domain.vector.CodeVectorStoreException;
-import org.example.domain.vector.PhysicalCoordinate;
+import org.example.domain.code.domain.CodeDomain;
+import org.example.domain.code.service.CodeRepository;
+import org.example.domain.code.exception.CodeServiceException;
+import org.example.domain.code.domain.CodeDomainPhysical;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
@@ -24,18 +27,20 @@ import java.util.concurrent.ExecutionException;
 import static io.qdrant.client.PointIdFactory.id;
 import static io.qdrant.client.ValueFactory.value;
 import static io.qdrant.client.VectorsFactory.vectors;
+import static io.qdrant.client.WithPayloadSelectorFactory.enable;
 
 /**
- * 基于 Qdrant 的 {@link CodeVectorStore} 实现。
+ * 基于 Qdrant 的 {@link CodeRepository} 实现。
  * <p>
  * 使用确定性 UUID（由物理坐标生成）作为 Qdrant 向量点的 ID，
  * 保证同一方法多次写入不会产生重复记录（天然幂等）。
  * <p>
  * 存储时硬拼接物理坐标到向量文本中，确保 LLM 检索结果自包含定位信息。
  */
-public class QdrantCodeVectorStore implements CodeVectorStore {
+@Service
+public class QdrantCodeRepositoryImpl implements CodeRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(QdrantCodeVectorStore.class);
+    private static final Logger log = LoggerFactory.getLogger(QdrantCodeRepositoryImpl.class);
 
     // ── Payload 字段名常量 ──
     static final String PAYLOAD_FILE_PATH = "file_path";
@@ -51,7 +56,7 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
     /** 双重检查锁 —— 确保集合只初始化一次 */
     private volatile boolean collectionEnsured;
 
-    public QdrantCodeVectorStore(QdrantClient qdrantClient, QdrantProperties properties) {
+    public QdrantCodeRepositoryImpl(QdrantClient qdrantClient, QdrantProperties properties) {
         this.qdrantClient = qdrantClient;
         this.properties = properties;
     }
@@ -59,15 +64,15 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
     // ── CodeVectorStore 接口实现 ──
 
     @Override
-    public void store(CodeVectorEntity entity) throws CodeVectorStoreException {
+    public void store(CodeDomain entity) throws CodeServiceException {
         ensureCollectionExists();
 
-        PhysicalCoordinate coord = entity.getCoordinate();
+        CodeDomainPhysical coord = entity.getCoordinate();
         UUID pointId = coord.toDeterministicId();
         String vectorText = entity.buildVectorText();
 
         if (entity.getEmbedding() == null || entity.getEmbedding().isEmpty()) {
-            throw new CodeVectorStoreException("embedding 不能为空，物理坐标: " + coord);
+            throw new CodeServiceException("embedding 不能为空，物理坐标: " + coord);
         }
 
         if (log.isDebugEnabled()) {
@@ -93,16 +98,16 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
             log.debug("代码向量存储成功: id={}, status={}", pointId, result.getStatus());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new CodeVectorStoreException("存储代码向量时线程被中断", e);
+            throw new CodeServiceException("存储代码向量时线程被中断", e);
         } catch (ExecutionException e) {
-            throw new CodeVectorStoreException(
+            throw new CodeServiceException(
                 "存储代码向量失败: " + e.getCause().getMessage(), e.getCause());
         }
     }
 
     @Override
-    public Optional<CodeVectorEntity> findByPhysicalCoordinate(PhysicalCoordinate coordinate)
-        throws CodeVectorStoreException {
+    public Optional<CodeDomain> searchPhysical(CodeDomainPhysical coordinate)
+        throws CodeServiceException {
         ensureCollectionExists();
 
         UUID pointId = coordinate.toDeterministicId();
@@ -126,10 +131,42 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new CodeVectorStoreException("查询代码向量时线程被中断", e);
+            throw new CodeServiceException("查询代码向量时线程被中断", e);
         } catch (ExecutionException e) {
-            throw new CodeVectorStoreException(
+            throw new CodeServiceException(
                 "查询代码向量失败: " + e.getCause().getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit)
+        throws CodeServiceException {
+        ensureCollectionExists();
+
+        SearchPoints request = SearchPoints.newBuilder()
+            .setCollectionName(properties.getCollectionName())
+            .addAllVector(queryEmbedding)
+            .setLimit(limit)
+            .setWithPayload(enable(true))
+            .build();
+
+        try {
+            List<ScoredPoint> results = qdrantClient.searchAsync(request).get();
+
+            if (results == null || results.isEmpty()) {
+                return List.of();
+            }
+
+            return results.stream()
+                .map(this::mapScoredPointToEntity)
+                .toList();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CodeServiceException("向量检索时线程被中断", e);
+        } catch (ExecutionException e) {
+            throw new CodeServiceException(
+                "向量检索失败: " + e.getCause().getMessage(), e.getCause());
         }
     }
 
@@ -165,9 +202,9 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
                 collectionEnsured = true;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new CodeVectorStoreException("初始化集合时线程被中断", e);
+                throw new CodeServiceException("初始化集合时线程被中断", e);
             } catch (ExecutionException e) {
-                throw new CodeVectorStoreException(
+                throw new CodeServiceException(
                     "初始化集合失败: " + e.getCause().getMessage(), e.getCause());
             }
         }
@@ -176,23 +213,31 @@ public class QdrantCodeVectorStore implements CodeVectorStore {
     // ── 内部工具方法 ──
 
     /**
+     * 将 Qdrant 返回的 {@link ScoredPoint} 映射回领域实体。
+     */
+    private CodeDomain mapScoredPointToEntity(ScoredPoint point) {
+        return fromPayloadMap(point.getPayloadMap());
+    }
+
+    /**
      * 将 Qdrant 返回的 {@link RetrievedPoint} 映射回领域实体。
      * <p>
      * 注意：查询时不返回向量（setWithVectors=false），
      * 因此返回的实体中 embedding 为 null。
      */
-    private CodeVectorEntity mapToEntity(RetrievedPoint point) {
-        Map<String, JsonWithInt.Value> payload = point.getPayloadMap();
+    private CodeDomain mapToEntity(RetrievedPoint point) {
+        return fromPayloadMap(point.getPayloadMap());
+    }
 
-        return CodeVectorEntity.builder()
-            .coordinate(new PhysicalCoordinate(
+    private CodeDomain fromPayloadMap(Map<String, JsonWithInt.Value> payload) {
+        return CodeDomain.builder()
+            .coordinate(new CodeDomainPhysical(
                 payload.get(PAYLOAD_FILE_PATH).getStringValue(),
                 payload.get(PAYLOAD_CLASS_NAME).getStringValue(),
                 payload.get(PAYLOAD_METHOD_SIGNATURE).getStringValue()
             ))
             .methodPurpose(nullSafeString(payload, PAYLOAD_METHOD_PURPOSE))
             .sourceCode(nullSafeString(payload, PAYLOAD_SOURCE_CODE))
-            // embedding 不返回（查询时 setWithVectors=false），调用方如需向量需另行获取
             .embedding(null)
             .build();
     }
