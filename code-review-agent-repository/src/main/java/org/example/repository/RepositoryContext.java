@@ -4,6 +4,8 @@ import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import org.example.repository.deepseek.DeepSeekClient;
 import org.example.repository.deepseek.DeepSeekProperties;
+import org.example.repository.embedding.DashScopeEmbeddingClient;
+import org.example.repository.embedding.DashScopeEmbeddingProperties;
 import org.example.repository.qdrant.QdrantCodeRepositoryImpl;
 import org.example.repository.qdrant.QdrantProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -16,7 +18,7 @@ import org.springframework.context.annotation.Bean;
  * @date 06-12-2026
  */
 @AutoConfiguration
-@EnableConfigurationProperties({QdrantProperties.class, DeepSeekProperties.class})
+@EnableConfigurationProperties({QdrantProperties.class, DeepSeekProperties.class, DashScopeEmbeddingProperties.class})
 public class RepositoryContext {
 
     // ── Qdrant ──
@@ -52,5 +54,16 @@ public class RepositoryContext {
                 "deepseek.api-key 未配置，请在 application.properties 中设置");
         }
         return new DeepSeekClient(properties);
+    }
+
+    // ── DashScope Embedding ──
+
+    @Bean
+    public DashScopeEmbeddingClient dashScopeEmbeddingClient(DashScopeEmbeddingProperties properties) {
+        if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
+            throw new IllegalStateException(
+                "dashscope.embedding.api-key 未配置，请在 application.properties 中设置");
+        }
+        return new DashScopeEmbeddingClient(properties);
     }
 }
