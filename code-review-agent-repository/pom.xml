@@ -19,6 +19,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>org.example</groupId>
             <artifactId>code-review-agent-domain</artifactId>
             <version>${revision}</version>
