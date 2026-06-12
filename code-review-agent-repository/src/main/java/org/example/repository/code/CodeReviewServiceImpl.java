@@ -100,7 +100,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
             return parseStructured(fallbackText);
         }
 
-        return new CodeReviewResult("REJECTED", "审查超时：未在 " + MAX_TOOL_ROUNDS + " 轮内完成", "HIGH");
+        return new CodeReviewResult(CodeReviewResult.Status.REJECTED.name(), "审查超时：未在 " + MAX_TOOL_ROUNDS + " 轮内完成", CodeReviewResult.RiskLevel.HIGH.name());
     }
 
     /**
@@ -127,7 +127,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
             log.warn("LLM JSON 解析失败: {}", e.getMessage());
         }
         // 兜底：反序列化失败时返回人工审查标记
-        return new CodeReviewResult("REJECTED",
-            "LLM 输出解析失败，请人工审查:\n" + jsonText, "HIGH");
+        return new CodeReviewResult(CodeReviewResult.Status.REJECTED.name(),
+            "LLM 输出解析失败，请人工审查:\n" + jsonText, CodeReviewResult.RiskLevel.HIGH.name());
     }
 }

@@ -24,7 +24,7 @@ public class CodeReviewSubmitServiceImpl implements CodeReviewSubmitService {
             log.warn("无法解析 projectId，跳过提交: {}", projectId);
             return;
         }
-        String event = "APPROVED".equals(result.getStatus()) ? "APPROVE" : "REQUEST_CHANGES";
+        String event = CodeReviewResult.Status.APPROVED.name().equals(result.getStatus()) ? "APPROVE" : "REQUEST_CHANGES";
         gitHubClient.submitReview(parts[0], parts[1], prNumber, result.getReason(), event);
         log.info("GitHub Review 提交完成: {} PR#{} → {}", projectId, prNumber, result.getStatus());
     }
