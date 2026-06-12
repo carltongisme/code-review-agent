@@ -1,9 +1,11 @@
-package org.example.domain.code.service;
+package org.example.domain.code;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.code.domain.CodeDomain;
 import org.example.domain.code.domain.CodeDomainPhysical;
+import org.example.domain.code.service.CodeAnalysisService;
+import org.example.domain.code.service.CodeRepository;
 import org.example.domain.embedding.EmbeddingService;
 import org.springframework.stereotype.Service;
 
