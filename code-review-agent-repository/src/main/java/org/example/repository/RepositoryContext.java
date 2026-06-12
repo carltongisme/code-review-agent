@@ -3,10 +3,12 @@ package org.example.repository;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import org.example.repository.deepseek.DeepSeekClient;
+import org.example.repository.code.CodeDeepSeekAnalysisService;
 import org.example.repository.deepseek.DeepSeekProperties;
+import org.example.repository.embedding.AliyunEmbeddingService;
 import org.example.repository.embedding.DashScopeEmbeddingClient;
 import org.example.repository.embedding.DashScopeEmbeddingProperties;
-import org.example.repository.qdrant.QdrantCodeRepositoryImpl;
+import org.example.repository.code.CodeQdrantRepository;
 import org.example.repository.qdrant.QdrantProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -39,10 +41,10 @@ public class RepositoryContext {
     }
 
     @Bean
-    public QdrantCodeRepositoryImpl qdrantCodeVectorStore(
+    public CodeQdrantRepository qdrantCodeVectorStore(
             QdrantClient qdrantClient,
             QdrantProperties properties) {
-        return new QdrantCodeRepositoryImpl(qdrantClient, properties);
+        return new CodeQdrantRepository(qdrantClient, properties);
     }
 
     // ── DeepSeek ──
@@ -56,6 +58,11 @@ public class RepositoryContext {
         return new DeepSeekClient(properties);
     }
 
+    @Bean
+    public CodeDeepSeekAnalysisService deepSeekCodeAnalysisService(DeepSeekClient client) {
+        return new CodeDeepSeekAnalysisService(client);
+    }
+
     // ── DashScope Embedding ──
 
     @Bean
@@ -65,5 +72,10 @@ public class RepositoryContext {
                 "dashscope.embedding.api-key 未配置，请在 application.properties 中设置");
         }
         return new DashScopeEmbeddingClient(properties);
+    }
+
+    @Bean
+    public AliyunEmbeddingService aliyunEmbeddingService(DashScopeEmbeddingClient client) {
+        return new AliyunEmbeddingService(client);
     }
 }

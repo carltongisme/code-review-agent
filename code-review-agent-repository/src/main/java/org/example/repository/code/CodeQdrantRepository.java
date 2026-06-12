@@ -1,4 +1,4 @@
-package org.example.repository.qdrant;
+package org.example.repository.code;
 
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections.Distance;
@@ -14,6 +14,7 @@ import org.example.domain.code.domain.CodeDomain;
 import org.example.domain.code.service.CodeRepository;
 import org.example.domain.code.exception.CodeServiceException;
 import org.example.domain.code.domain.CodeDomainPhysical;
+import org.example.repository.qdrant.QdrantProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,9 +39,9 @@ import static io.qdrant.client.WithPayloadSelectorFactory.enable;
  * 存储时硬拼接物理坐标到向量文本中，确保 LLM 检索结果自包含定位信息。
  */
 @Service
-public class QdrantCodeRepositoryImpl implements CodeRepository {
+public class CodeQdrantRepository implements CodeRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(QdrantCodeRepositoryImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(CodeQdrantRepository.class);
 
     // ── Payload 字段名常量 ──
     static final String PAYLOAD_FILE_PATH = "file_path";
@@ -56,7 +57,7 @@ public class QdrantCodeRepositoryImpl implements CodeRepository {
     /** 双重检查锁 —— 确保集合只初始化一次 */
     private volatile boolean collectionEnsured;
 
-    public QdrantCodeRepositoryImpl(QdrantClient qdrantClient, QdrantProperties properties) {
+    public CodeQdrantRepository(QdrantClient qdrantClient, QdrantProperties properties) {
         this.qdrantClient = qdrantClient;
         this.properties = properties;
     }
