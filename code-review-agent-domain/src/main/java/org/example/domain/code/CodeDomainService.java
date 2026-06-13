@@ -189,6 +189,27 @@ public class CodeDomainService {
     }
 
     /**
+     * 单文件删除：从向量库和调用图索引中清理该文件的所有方法。
+     * <p>
+     * 用于 push-to-master 后清理被删除或修改（删旧导新）的文件。
+     *
+     * @param projectId 项目 ID（如 "owner/repo"）
+     * @param filePath  文件相对路径（如 "src/main/java/com/example/Service.java"）
+     */
+    public void deleteJavaFile(String projectId, String filePath) {
+        String className = filePath.substring(filePath.lastIndexOf('/') + 1)
+            .replace(".java", "");
+
+        CodeDomainPhysical coord = new CodeDomainPhysical(
+            projectId, filePath, className, null);
+        codeRepository.delete(coord);
+
+        callGraphIndex.removeCallersByFilePrefix(projectId, className);
+
+        log.info("单文件删除完成: projectId={}, filePath={}", projectId, filePath);
+    }
+
+    /**
      * 审查并提交：执行 LLM 审查后将结论提交到 Git 平台。
      * <p>
      * 封装完整流程，API 层只需调用此方法，无需感知底层 GitHub API。

@@ -6,10 +6,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.api.config.WebhookProperties;
 import org.example.domain.code.CodeDomainService;
-import org.example.domain.code.domain.CodeDomainPhysical;
 import org.example.domain.code.model.CodeReviewResult;
-import org.example.domain.code.service.CallGraphIndex;
-import org.example.domain.code.service.CodeRepository;
 import org.example.repository.github.GitHubClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,12 +40,6 @@ public class GitHubWebhookController {
 
     @Resource
     private CodeDomainService codeDomainService;
-
-    @Resource
-    private CodeRepository codeRepository;
-
-    @Resource
-    private CallGraphIndex callGraphIndex;
 
     @Resource
     private GitHubClient gitHubClient;
@@ -151,120 +142,77 @@ public class GitHubWebhookController {
      * <p>
      * 合并到主分支后：
      * <ul>
-     *   <li>删除的 Java 文件 → 从 Qdrant 删除向量 + 清理 {@link CallGraphIndex}</li>
-     *   <li>修改的 Java 文件 → 先删旧数据，再从 GitHub 拉取新内容重新导入</li>
+     *   <li>删除的 Java 文件</li>
+     *   <li>修改的 Java 文件 → 先删旧，再从 GitHub 拉取新内容导入</li>
      *   <li>新增的 Java 文件 → 从 GitHub 拉取内容，解析并导入</li>
      * </ul>
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> handlePush(Map<String, Object> body) {
         String ref = (String) body.get("ref");
-
-        // 只响应 master / main 分支的 push
         if (!"refs/heads/master".equals(ref) && !"refs/heads/main".equals(ref)) {
             return Map.of("status", "skipped", "ref", ref);
         }
-
         Map<String, Object> repo = (Map<String, Object>) body.get("repository");
         String projectId = (String) repo.get("full_name");
         String after = (String) body.get("after");
         List<Map<String, Object>> commits = (List<Map<String, Object>>) body.get("commits");
-
+        String owner = parseOwner(projectId);
+        String repoName = parseRepo(projectId);
         log.info("Push to {}: projectId={}, after={}, commits={}", ref, projectId, after, commits.size());
 
-        // 解析 owner/repo
-        String[] parts = projectId.split("/", 2);
-        String owner = parts[0];
-        String repoName = parts.length > 1 ? parts[1] : "";
-
-        // 收集去重后的变更文件
-        Set<String> addedFiles = new LinkedHashSet<>();
-        Set<String> modifiedFiles = new LinkedHashSet<>();
-        Set<String> removedFiles = new LinkedHashSet<>();
-
+        Set<String> addedJavaFiles = new LinkedHashSet<>();
+        Set<String> modifiedJavaFiles = new LinkedHashSet<>();
+        Set<String> removedJavaFiles = new LinkedHashSet<>();
         for (Map<String, Object> commit : commits) {
-            List<String> added = (List<String>) commit.get("added");
-            List<String> modified = (List<String>) commit.get("modified");
-            List<String> removed = (List<String>) commit.get("removed");
-
-            if (added != null) addedFiles.addAll(added);
-            if (modified != null) modifiedFiles.addAll(modified);
-            if (removed != null) removedFiles.addAll(removed);
+            collectJavaFiles(commit, addedJavaFiles, modifiedJavaFiles, removedJavaFiles);
         }
+        int deletedCount = 0, methodsImported = 0, skipped = 0, failed = 0;
 
-        // 过滤出 Java 文件
-        Set<String> addedJavaFiles = filterJavaFiles(addedFiles);
-        Set<String> modifiedJavaFiles = filterJavaFiles(modifiedFiles);
-        Set<String> removedJavaFiles = filterJavaFiles(removedFiles);
-
-        int qdrantDeletedCount = 0;
-        int methodsImported = 0;
-        int filesSkipped = 0;
-        int filesFailed = 0;
-
-        // ── 1. 处理已删除的 Java 文件：从 Qdrant 和 CallGraphIndex 中清理 ──
+        // 删除的 .java：清理向量库 + 调用图索引
         for (String file : removedJavaFiles) {
             try {
-                CodeDomainPhysical coord = new CodeDomainPhysical(projectId, file, "", "");
-                codeRepository.delete(coord);
-                qdrantDeletedCount++;
-
-                String className = extractClassName(file);
-                callGraphIndex.removeCallersByFilePrefix(projectId, className);
-                log.info("已删除文件清理完成: projectId={}, file={}", projectId, file);
+                codeDomainService.deleteJavaFile(projectId, file);
+                deletedCount++;
             } catch (Exception e) {
-                log.error("删除文件清理失败: projectId={}, file={}, error={}",
-                    projectId, file, e.getMessage());
-                filesFailed++;
+                log.error("删除文件失败: projectId={}, file={}, error={}", projectId, file, e.getMessage());
+                failed++;
             }
         }
 
-        // ── 2. 处理已修改的 Java 文件：先删旧，再导新 ──
+        // 修改的 .java：先删旧数据
         for (String file : modifiedJavaFiles) {
             try {
-                // 先清理旧的向量和调用图记录
-                CodeDomainPhysical coord = new CodeDomainPhysical(projectId, file, "", "");
-                codeRepository.delete(coord);
-                qdrantDeletedCount++;
-
-                String className = extractClassName(file);
-                callGraphIndex.removeCallersByFilePrefix(projectId, className);
+                codeDomainService.deleteJavaFile(projectId, file);
+                deletedCount++;
             } catch (Exception e) {
                 log.warn("修改文件清理旧数据失败，继续导入: projectId={}, file={}, error={}",
                     projectId, file, e.getMessage());
             }
-            // 清理完成后进入导入流程（继续到第 3 步）
         }
 
-        // ── 3. 处理新增 + 修改的 Java 文件：从 GitHub 拉取内容并导入 ──
+        // 新增 + 修改的 .java：从 GitHub 拉取内容并导入
         Set<String> filesToImport = new LinkedHashSet<>();
         filesToImport.addAll(addedJavaFiles);
         filesToImport.addAll(modifiedJavaFiles);
-
         for (String file : filesToImport) {
             try {
                 String content = gitHubClient.getFileContent(owner, repoName, file, after);
                 if (content == null || content.isBlank()) {
-                    log.warn("跳过文件（无内容）: projectId={}, file={}", projectId, file);
-                    filesSkipped++;
+                    skipped++;
                     continue;
                 }
-
-                int count = codeDomainService.addJavaFile(projectId, file, content);
-                methodsImported += count;
-                log.info("文件导入完成: projectId={}, file={}, 方法数={}", projectId, file, count);
-
+                methodsImported += codeDomainService.addJavaFile(projectId, file, content);
             } catch (Exception e) {
-                log.error("文件导入失败: projectId={}, file={}, error={}",
-                    projectId, file, e.getMessage());
-                filesFailed++;
+                log.error("文件导入失败: projectId={}, file={}, error={}", projectId, file, e.getMessage());
+                failed++;
             }
         }
 
         log.info("Push 同步完成: projectId={}, added={}, modified={}, removed={}, "
-                + "methodsImported={}, qdrantDeleted={}, filesSkipped={}, filesFailed={}",
+                + "methodsImported={}, deleted={}, skipped={}, failed={}",
             projectId, addedJavaFiles.size(), modifiedJavaFiles.size(), removedJavaFiles.size(),
-            methodsImported, qdrantDeletedCount, filesSkipped, filesFailed);
+            methodsImported, deletedCount, skipped, failed);
 
         return Map.of(
             "status", "synced",
@@ -274,27 +222,36 @@ public class GitHubWebhookController {
             "modifiedFiles", modifiedJavaFiles.size(),
             "removedFiles", removedJavaFiles.size(),
             "methodsImported", methodsImported,
-            "qdrantDeleted", qdrantDeletedCount,
-            "filesSkipped", filesSkipped,
-            "filesFailed", filesFailed
+            "qdrantDeleted", deletedCount,
+            "filesSkipped", skipped,
+            "filesFailed", failed
         );
     }
 
-    /** 从文件全路径中过滤出 .java 文件 */
-    private static Set<String> filterJavaFiles(Set<String> files) {
-        Set<String> result = new LinkedHashSet<>();
-        for (String f : files) {
-            if (f.endsWith(".java")) {
-                result.add(f);
-            }
-        }
-        return result;
+    @SuppressWarnings("unchecked")
+    private static void collectJavaFiles(Map<String, Object> commit,
+                                          Set<String> added, Set<String> modified, Set<String> removed) {
+        addIfJava((List<String>) commit.get("added"), added);
+        addIfJava((List<String>) commit.get("modified"), modified);
+        addIfJava((List<String>) commit.get("removed"), removed);
     }
 
-    /** 从文件路径提取类名（文件名去除 .java 后缀） */
-    private static String extractClassName(String filePath) {
-        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-        return fileName.replace(".java", "");
+    private static void addIfJava(List<String> files, Set<String> target) {
+        if (files == null) return;
+        for (String f : files) {
+            if (f.endsWith(".java")) {
+                target.add(f);
+            }
+        }
+    }
+
+    private static String parseOwner(String projectId) {
+        return projectId.split("/", 2)[0];
+    }
+
+    private static String parseRepo(String projectId) {
+        String[] parts = projectId.split("/", 2);
+        return parts.length > 1 ? parts[1] : "";
     }
 
     /** HMAC-SHA256 签名校验 */
