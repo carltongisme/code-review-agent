@@ -158,7 +158,7 @@ public class CodeDomainService {
      * @param sourceCode 文件完整源码
      * @return 成功导入的方法数量
      */
-    public int syncFile(String projectId, String filePath, String sourceCode) {
+    public int addJavaFile(String projectId, String filePath, String sourceCode) {
         List<ExtractedMethod> methods = javaCodeParser.parseFile(sourceCode);
         if (methods.isEmpty()) {
             log.debug("文件中无方法: projectId={}, filePath={}", projectId, filePath);

@@ -250,7 +250,7 @@ public class GitHubWebhookController {
                     continue;
                 }
 
-                int count = codeDomainService.syncFile(projectId, file, content);
+                int count = codeDomainService.addJavaFile(projectId, file, content);
                 methodsImported += count;
                 log.info("文件导入完成: projectId={}, file={}, 方法数={}", projectId, file, count);
 
