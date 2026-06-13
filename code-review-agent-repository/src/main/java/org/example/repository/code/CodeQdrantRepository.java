@@ -84,9 +84,9 @@ public class CodeQdrantRepository implements CodeRepository {
             .setId(id(pointId))
             .setVectors(vectors(entity.getEmbedding()))
             .putPayload(PAYLOAD_PROJECT_ID, value(projectId))
-            .putPayload(PAYLOAD_FILE_PATH, value(coord.filePath()))
-            .putPayload(PAYLOAD_CLASS_NAME, value(coord.className()))
-            .putPayload(PAYLOAD_METHOD_SIGNATURE, value(coord.methodSignature()))
+            .putPayload(PAYLOAD_FILE_PATH, value(coord.getFilePath()))
+            .putPayload(PAYLOAD_CLASS_NAME, value(coord.getClassName()))
+            .putPayload(PAYLOAD_METHOD_SIGNATURE, value(coord.getMethodSignature()))
             .putPayload(PAYLOAD_METHOD_PURPOSE, value(
                 entity.getMethodPurpose() != null ? entity.getMethodPurpose() : ""))
             .putPayload(PAYLOAD_SOURCE_CODE, value(
@@ -184,15 +184,15 @@ public class CodeQdrantRepository implements CodeRepository {
         ensureCollectionExists();
 
         Filter filter = Filter.newBuilder()
-            .addMust(matchKeyword(PAYLOAD_PROJECT_ID, coordinate.projectId()))
-            .addMust(matchKeyword(PAYLOAD_FILE_PATH, coordinate.filePath()))
+            .addMust(matchKeyword(PAYLOAD_PROJECT_ID, coordinate.getProjectId()))
+            .addMust(matchKeyword(PAYLOAD_FILE_PATH, coordinate.getFilePath()))
             .build();
 
         try {
             UpdateResult result = qdrantClient.deleteAsync(
                 properties.getCollectionName(), filter).get();
             log.debug("按文件路径删除向量: projectId={}, filePath={}, status={}",
-                coordinate.projectId(), coordinate.filePath(), result.getStatus());
+                coordinate.getProjectId(), coordinate.getFilePath(), result.getStatus());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new CodeServiceException("删除向量时线程被中断", e);

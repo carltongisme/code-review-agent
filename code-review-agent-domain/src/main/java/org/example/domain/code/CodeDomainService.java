@@ -76,7 +76,7 @@ public class CodeDomainService {
         entity.setEmbedding(embeddingService.embed(entity.buildVectorText()));
 
         // 4. 存储到 Qdrant（projectId 从 coordinate 提取）
-        codeRepository.store(entity, coordinate.projectId());
+        codeRepository.store(entity, coordinate.getProjectId());
 
         log.info("方法存储完成: {}", coordinate);
         return entity;

@@ -112,8 +112,8 @@ public class FunctionCallTools {
 
         StringBuilder sb = new StringBuilder("【语义相似代码】:\n");
         for (CodeDomain entity : results) {
-            sb.append("- ").append(entity.getCoordinate().className())
-                .append("::").append(entity.getCoordinate().methodSignature())
+            sb.append("- ").append(entity.getCoordinate().getClassName())
+                .append("::").append(entity.getCoordinate().getMethodSignature())
                 .append(" → ").append(entity.getMethodPurpose()).append("\n");
         }
         return sb.toString();

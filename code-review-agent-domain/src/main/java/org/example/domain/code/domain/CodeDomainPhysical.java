@@ -1,10 +1,13 @@
 package org.example.domain.code.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
- * 代码块的物理坐标 —— 由文件路径 + 所属类名 + 方法签名组成的值对象。
+ * 代码块的物理坐标 —— 由项目ID + 文件路径 + 所属类名 + 方法签名组成的值对象。
  * <p>
  * 物理坐标是代码块在项目中的唯一定位标识，用于：
  * <ul>
@@ -12,13 +15,21 @@ import java.util.UUID;
  *   <li>按坐标精确检索已存储的代码块</li>
  * </ul>
  */
-public record CodeDomainPhysical(
-    String projectId,
-    String filePath,
-    String className,
-    // 方法签名也会带参数。例如 login(String,String)
-    String methodSignature
-) {
+@Data
+@AllArgsConstructor
+public class CodeDomainPhysical {
+
+    /** 项目唯一标识（如 "owner/repo"） */
+    private String projectId;
+
+    /** 文件相对路径（如 "src/main/java/com/example/Service.java"） */
+    private String filePath;
+
+    /** 所属类名（不含包名） */
+    private String className;
+
+    /** 方法签名，含参数类型，如 login(String,String) */
+    private String methodSignature;
 
     /**
      * 生成确定性 UUID（基于 UUID v3/MD5 风格）。

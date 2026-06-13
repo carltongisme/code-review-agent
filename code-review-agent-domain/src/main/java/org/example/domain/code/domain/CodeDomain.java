@@ -40,8 +40,8 @@ public class CodeDomain {
      */
     public String buildVectorText() {
         return "【方法用途注释】：" + (methodPurpose != null ? methodPurpose : "") + "\n"
-            + "【类名】：" + coordinate.className() + "\n"
-            + "【方法名】：" + coordinate.methodSignature() + "\n"
+            + "【类名】：" + coordinate.getClassName() + "\n"
+            + "【方法名】：" + coordinate.getMethodSignature() + "\n"
             + "【完整源码】：" + (sourceCode != null ? sourceCode : "");
     }
 }
