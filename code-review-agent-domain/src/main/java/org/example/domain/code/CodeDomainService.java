@@ -174,8 +174,10 @@ public class CodeDomainService {
                 m.methodSignature()
             );
 
+            // 存储到数据库
             store(m.sourceCode(), coord);
 
+            // 存储索引检索
             String callerSignature = m.className() + "::" + m.methodSignature();
             callGraphIndex.addCalls(projectId, callerSignature, m.calledMethods());
 
