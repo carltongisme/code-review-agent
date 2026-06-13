@@ -51,4 +51,15 @@ public interface CodeRepository {
      * @param projectId      项目 ID，为 null 时不按项目过滤（跨项目搜索）
      */
     List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit, String projectId) throws CodeServiceException;
+
+    /**
+     * 按文件路径删除该文件下所有方法的向量记录。
+     * <p>
+     * 用于合并到 master 后清理被删除或修改的文件的旧向量数据。
+     * 仅使用 coordinate 中的 projectId 和 filePath，忽略 className 和 methodSignature。
+     *
+     * @param coordinate 物理坐标（使用其中的 projectId 和 filePath）
+     * @throws CodeServiceException 删除失败时抛出
+     */
+    void deleteByFilePath(CodeDomainPhysical coordinate) throws CodeServiceException;
 }

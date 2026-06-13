@@ -148,6 +148,45 @@ public class CodeDomainService {
     }
 
     /**
+     * 单文件增量同步：解析一个 Java 文件，对其中的所有方法执行 语义分析 → 向量化 → 存储，
+     * 并更新调用图反向索引。
+     * <p>
+     * 用于 push-to-master 后对新增/修改文件的增量更新。
+     *
+     * @param projectId  项目 ID（如 "owner/repo"）
+     * @param filePath   文件相对路径（如 "src/main/java/com/example/Service.java"）
+     * @param sourceCode 文件完整源码
+     * @return 成功导入的方法数量
+     */
+    public int syncFile(String projectId, String filePath, String sourceCode) {
+        List<ExtractedMethod> methods = javaCodeParser.parseFile(sourceCode);
+        if (methods.isEmpty()) {
+            log.debug("文件中无方法: projectId={}, filePath={}", projectId, filePath);
+            return 0;
+        }
+
+        int count = 0;
+        for (ExtractedMethod m : methods) {
+            CodeDomainPhysical coord = new CodeDomainPhysical(
+                projectId,
+                filePath,
+                m.className(),
+                m.methodSignature()
+            );
+
+            store(m.sourceCode(), coord);
+
+            String callerSignature = m.className() + "::" + m.methodSignature();
+            callGraphIndex.addCalls(projectId, callerSignature, m.calledMethods());
+
+            count++;
+        }
+
+        log.info("单文件同步完成: projectId={}, filePath={}, 方法数={}", projectId, filePath, count);
+        return count;
+    }
+
+    /**
      * 审查并提交：执行 LLM 审查后将结论提交到 Git 平台。
      * <p>
      * 封装完整流程，API 层只需调用此方法，无需感知底层 GitHub API。

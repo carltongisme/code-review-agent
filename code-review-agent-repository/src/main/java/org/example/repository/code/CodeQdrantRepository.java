@@ -179,6 +179,29 @@ public class CodeQdrantRepository implements CodeRepository {
         }
     }
 
+    @Override
+    public void deleteByFilePath(CodeDomainPhysical coordinate) throws CodeServiceException {
+        ensureCollectionExists();
+
+        Filter filter = Filter.newBuilder()
+            .addMust(matchKeyword(PAYLOAD_PROJECT_ID, coordinate.projectId()))
+            .addMust(matchKeyword(PAYLOAD_FILE_PATH, coordinate.filePath()))
+            .build();
+
+        try {
+            UpdateResult result = qdrantClient.deleteAsync(
+                properties.getCollectionName(), filter).get();
+            log.debug("按文件路径删除向量: projectId={}, filePath={}, status={}",
+                coordinate.projectId(), coordinate.filePath(), result.getStatus());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CodeServiceException("删除向量时线程被中断", e);
+        } catch (ExecutionException e) {
+            throw new CodeServiceException(
+                "删除向量失败: " + e.getCause().getMessage(), e.getCause());
+        }
+    }
+
     // ── 集合生命周期 ──
 
     /**
