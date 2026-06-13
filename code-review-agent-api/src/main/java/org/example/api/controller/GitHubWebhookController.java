@@ -1,6 +1,7 @@
 package org.example.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.example.common.utils.JsonUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.api.config.WebhookProperties;
@@ -35,8 +36,6 @@ import java.util.Set;
 @Slf4j
 @RestController
 public class GitHubWebhookController {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Resource
     private WebhookProperties webhookProperties;
@@ -80,7 +79,7 @@ public class GitHubWebhookController {
         log.info("收到 GitHub Webhook: event={}, deliveryId={}", eventType, deliveryId);
 
         try {
-            Map<String, Object> body = mapper.readValue(payload, Map.class);
+            Map<String, Object> body = JsonUtils.fromJson(payload, new TypeReference<Map<String, Object>>() {});
 
             return switch (eventType) {
                 case "pull_request" -> handlePullRequest(body);
