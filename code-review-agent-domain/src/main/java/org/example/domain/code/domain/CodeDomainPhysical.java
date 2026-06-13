@@ -1,6 +1,5 @@
 package org.example.domain.code.domain;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.nio.charset.StandardCharsets;
@@ -16,7 +15,6 @@ import java.util.UUID;
  * </ul>
  */
 @Data
-@AllArgsConstructor
 public class CodeDomainPhysical {
 
     /** 项目唯一标识（如 "owner/repo"） */
@@ -30,6 +28,14 @@ public class CodeDomainPhysical {
 
     /** 方法签名，含参数类型，如 login(String,String) */
     private String methodSignature;
+
+    public CodeDomainPhysical(String projectId, String filePath,
+                              String className, String methodSignature) {
+        this.projectId = projectId;
+        this.filePath = filePath;
+        this.className = className;
+        this.methodSignature = methodSignature;
+    }
 
     /**
      * 生成确定性 UUID（基于 UUID v3/MD5 风格）。
