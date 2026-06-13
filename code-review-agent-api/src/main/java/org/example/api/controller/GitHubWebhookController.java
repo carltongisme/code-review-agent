@@ -206,7 +206,7 @@ public class GitHubWebhookController {
         for (String file : removedJavaFiles) {
             try {
                 CodeDomainPhysical coord = new CodeDomainPhysical(projectId, file, "", "");
-                codeRepository.deleteByFilePath(coord);
+                codeRepository.delete(coord);
                 qdrantDeletedCount++;
 
                 String className = extractClassName(file);
@@ -224,7 +224,7 @@ public class GitHubWebhookController {
             try {
                 // 先清理旧的向量和调用图记录
                 CodeDomainPhysical coord = new CodeDomainPhysical(projectId, file, "", "");
-                codeRepository.deleteByFilePath(coord);
+                codeRepository.delete(coord);
                 qdrantDeletedCount++;
 
                 String className = extractClassName(file);

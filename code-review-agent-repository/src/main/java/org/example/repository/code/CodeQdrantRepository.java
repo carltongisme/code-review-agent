@@ -180,7 +180,7 @@ public class CodeQdrantRepository implements CodeRepository {
     }
 
     @Override
-    public void deleteByFilePath(CodeDomainPhysical coordinate) throws CodeServiceException {
+    public void delete(CodeDomainPhysical coordinate) throws CodeServiceException {
         ensureCollectionExists();
 
         Filter filter = Filter.newBuilder()
