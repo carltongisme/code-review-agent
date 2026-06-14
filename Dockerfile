@@ -31,7 +31,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # 时区校正节点：由于 Alpine 默认使用 UTC 时间，必须强行注入亚洲/上海时区层
-RUN apk add --no-cache tzdata && \
+RUN apk add --no-cache tzdata git && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
 
