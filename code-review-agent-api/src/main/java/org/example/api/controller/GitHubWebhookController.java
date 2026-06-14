@@ -256,6 +256,9 @@ public class GitHubWebhookController {
 
     /** HMAC-SHA256 签名校验 */
     private void verifySignature(String payload, String signature) {
+        if (signature == null || signature.isBlank()) {
+            throw new SecurityException("缺少 Webhook 签名，请确认 X-Hub-Signature-256 header");
+        }
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec keySpec = new SecretKeySpec(
