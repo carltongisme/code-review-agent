@@ -17,8 +17,7 @@ COPY . .
 # -am (also-make): 驱动反应堆自动向上追溯，主动协助编译该子模块所依赖的所有同级兄弟模块
 # -DskipTests: 拦截并跳过单元测试执行，加速构建流程
 # --mount=type=cache: 挂载宿主机物理目录，拦截并复用已有的 .m2 依赖缓存，缩短扩容时间
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn clean package -pl code-review-agent-api -am -DskipTests && \
+RUN mvn clean package -pl code-review-agent-api -am -DskipTests && \
     mv code-review-agent-api/target/*.jar /build/app.jar
 
 # =========================================================================
