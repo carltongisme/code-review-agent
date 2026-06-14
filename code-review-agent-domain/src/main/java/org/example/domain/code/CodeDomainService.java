@@ -137,7 +137,7 @@ public class CodeDomainService {
 
                 // 更新调用图反向索引
                 String callerSignature = m.className() + "::" + m.methodSignature();
-                callGraphIndex.addCalls(projectId, callerSignature, m.calledMethods());
+                callGraphIndex.addCalls(projectId, filePath, callerSignature, m.calledMethods());
 
                 totalMethods++;
             }
@@ -179,7 +179,7 @@ public class CodeDomainService {
 
             // 存储索引检索
             String callerSignature = m.className() + "::" + m.methodSignature();
-            callGraphIndex.addCalls(projectId, callerSignature, m.calledMethods());
+            callGraphIndex.addCalls(projectId, filePath, callerSignature, m.calledMethods());
 
             count++;
         }
@@ -204,7 +204,7 @@ public class CodeDomainService {
             projectId, filePath, className, null);
         codeRepository.delete(coord);
 
-        callGraphIndex.removeCallersByFilePrefix(projectId, className);
+        callGraphIndex.removeCallersByFilePrefix(projectId, filePath, className);
 
         log.info("单文件删除完成: projectId={}, filePath={}", projectId, filePath);
     }

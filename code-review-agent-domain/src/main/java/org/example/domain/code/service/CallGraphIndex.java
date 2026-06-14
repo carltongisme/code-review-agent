@@ -17,11 +17,16 @@ import java.util.regex.Pattern;
  * <p>
  * 维护 "被调方法 → 调用方集合" 的映射关系，支持审查时查询上下游影响。
  * <pre>
+ * Key  （被调方）: "projectId::ClassName::methodSignature"
+ * Value（调用方）: "projectId::filePath::ClassName::methodSignature"
+ *
  * 示例:
  *   AuthController.login() 调用了 UserService.authenticate()
  *   ApiGateway.handle()   调用了 UserService.authenticate()
  *   →
- *   index: "UserService::authenticate" → {"AuthController::login", "ApiGateway::handle"}
+ *   key:   "myproject::UserService::authenticate"
+ *   value: {"myproject::src/.../AuthController.java::AuthController::login",
+ *           "myproject::src/.../ApiGateway.java::ApiGateway::handle"}
  * </pre>
  */
 @Component
@@ -31,7 +36,7 @@ public class CallGraphIndex {
 
     /**
      * 核心索引结构: key = "projectId::ClassName::methodSignature" (被调方),
-     *               value = 调用它的方法 ID 集合
+     *               value = "projectId::filePath::ClassName::methodSignature" (调用方)
      */
     private final Map<String, Set<String>> callerIndex = new ConcurrentHashMap<>();
 
@@ -41,17 +46,16 @@ public class CallGraphIndex {
      * 全量导入时调用：对每个被解析的方法，记录它调用了哪些其他方法。
      *
      * @param projectId         项目 ID
+     * @param filePath          调用方所在文件路径
      * @param callerSignature   调用方方法签名（格式: "ClassName::methodSig"）
-     * @param calleeSignatures  被调方法签名列表
+     * @param calleeSignatures  被调方法签名列表（格式: "ClassName::methodSig"，不含 filePath）
      */
-    public void addCalls(String projectId, String callerSignature,
+    public void addCalls(String projectId, String filePath, String callerSignature,
                          List<String> calleeSignatures) {
-        // 构建调用方的完整 ID
-        String callerId = projectId + "::" + callerSignature;
+        String callerId = projectId + "::" + filePath + "::" + callerSignature;
 
         for (String calleeSig : calleeSignatures) {
             String calleeId = projectId + "::" + calleeSig;
-            // 为被调方法记录调用方
             callerIndex.computeIfAbsent(calleeId, k -> ConcurrentHashMap.newKeySet())
                 .add(callerId);
         }
@@ -145,22 +149,27 @@ public class CallGraphIndex {
     }
 
     /**
-     * 按文件前缀清理索引 —— 删除文件中所有方法的调用关系。
+     * 按文件清理索引 —— 删除文件中所有方法的调用关系。
      * <p>
-     * 合并到 master 后某文件被删除时调用，做 best-effort 类名后缀匹配。
+     * 合并到 master 后某文件被删除时调用。
+     * <ul>
+     *   <li>key 清理：按 className 做 best-effort 匹配（key 不含 filePath，
+     *       不同路径的同名类无法区分）</li>
+     *   <li>value 清理：按 filePath 精确匹配（调用方位于被删文件），
+     *       同时按 key 清理结果移除对被删方法的跨文件引用</li>
+     * </ul>
      *
-     * @param projectId  项目 ID
-     * @param className  类名（不含包名，如 "UserService"），做后缀匹配
+     * @param projectId 项目 ID
+     * @param filePath  被删除文件的路径
+     * @param className 类名（不含包名），用于 key 的 best-effort 匹配
      */
-    public void removeCallersByFilePrefix(String projectId, String className) {
+    public void removeCallersByFilePrefix(String projectId, String filePath, String className) {
         String prefix = projectId + "::";
         Set<String> toRemove = new HashSet<>();
 
-        // 找到所有 key 格式为 projectId::*::className::* 的条目
+        // 1. 按 className 匹配 key（best-effort，key 不含 filePath）
         for (String key : callerIndex.keySet()) {
             if (!key.startsWith(prefix)) continue;
-            // key 格式: projectId::scopeOrClass::methodName
-            // 检查倒数第二个 "::" 之间的部分是否匹配 className
             String afterProject = key.substring(prefix.length());
             int lastColon = afterProject.lastIndexOf("::");
             if (lastColon < 0) continue;
@@ -170,17 +179,25 @@ public class CallGraphIndex {
                 toRemove.add(key);
             }
         }
-
-        // 移除索引条目
         toRemove.forEach(callerIndex::remove);
 
-        // 从所有调用方集合中移除对被删方法的引用
+        // 2. 清理 value：按 filePath 精确删除调用方位于本文件的记录
+        String callerPrefix = projectId + "::" + filePath + "::";
+        callerIndex.values().forEach(callers ->
+            callers.removeIf(c -> c.startsWith(callerPrefix)));
+
+        // 3. 清理 value：被删方法（key）的跨文件引用
         if (!toRemove.isEmpty()) {
             callerIndex.values().forEach(callers ->
-                callers.removeIf(c -> toRemove.contains(c)));
+                callers.removeIf(c -> {
+                    String[] parts = c.split("::", 4);
+                    if (parts.length < 4) return false;
+                    String keyFormat = parts[0] + "::" + parts[2] + "::" + parts[3];
+                    return toRemove.contains(keyFormat);
+                }));
         }
 
-        log.info("索引清理完成: projectId={}, className={}, 移除条目={}",
-            projectId, className, toRemove.size());
+        log.info("索引清理完成: projectId={}, filePath={}, className={}, 移除条目={}",
+            projectId, filePath, className, toRemove.size());
     }
 }

@@ -48,14 +48,14 @@ public class FunctionCallTools {
 
         StringBuilder sb = new StringBuilder("【上游调用方】:\n");
         for (String callerId : callers) {
-            String[] parts = callerId.split("::", 3);
-            if (parts.length >= 3) {
+            String[] parts = callerId.split("::", 4);
+            if (parts.length >= 4) {
                 codeRepository.searchPhysical(
-                    new CodeDomainPhysical(projectId, "", parts[1], parts[2]))
+                    new CodeDomainPhysical(projectId, parts[1], parts[2], parts[3]))
                     .ifPresentOrElse(
-                        e -> sb.append("- ").append(parts[1]).append("::").append(parts[2])
+                        e -> sb.append("- ").append(parts[2]).append("::").append(parts[3])
                             .append(" → ").append(e.getMethodPurpose()).append("\n"),
-                        () -> sb.append("- ").append(parts[1]).append("::").append(parts[2]).append("\n"));
+                        () -> sb.append("- ").append(parts[2]).append("::").append(parts[3]).append("\n"));
             }
         }
         return sb.toString();
@@ -64,6 +64,8 @@ public class FunctionCallTools {
     @FunctionCall(name = "lookup_callees", description = "查找指定方法体内调用了哪些其他方法。用于评估修改对下游的影响。")
     public String lookupCallees(
             String projectId,
+            @FunctionCallParam(name = "filePath", description = "文件路径")
+            String filePath,
             @FunctionCallParam(name = "methodSignature", description = "方法签名，格式：ClassName::methodName(paramTypes)") String methodSignature
     ) {
 
@@ -71,7 +73,7 @@ public class FunctionCallTools {
         if (parts.length < 2) return "错误: 格式应为 ClassName::methodName(paramTypes)";
 
         Optional<CodeDomain> entity = codeRepository.searchPhysical(
-            new CodeDomainPhysical(projectId, "", parts[0], parts[1]));
+            new CodeDomainPhysical(projectId, filePath, parts[0], parts[1]));
         if (entity.isEmpty()) return "未找到方法: " + methodSignature;
 
         List<String> callees = javaCodeParser.extractCalledMethods(entity.get().getSourceCode());

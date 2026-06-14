@@ -108,8 +108,7 @@ public class CodeQdrantRepository implements CodeRepository {
     }
 
     @Override
-    public Optional<CodeDomain> searchPhysical(CodeDomainPhysical coordinate)
-        throws CodeServiceException {
+    public Optional<CodeDomain> searchPhysical(CodeDomainPhysical coordinate) throws CodeServiceException {
         ensureCollectionExists();
 
         UUID pointId = coordinate.toDeterministicId();
@@ -141,8 +140,7 @@ public class CodeQdrantRepository implements CodeRepository {
     }
 
     @Override
-    public List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit, String projectId)
-        throws CodeServiceException {
+    public List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit, String projectId) throws CodeServiceException {
         ensureCollectionExists();
 
         SearchPoints.Builder builder = SearchPoints.newBuilder()
