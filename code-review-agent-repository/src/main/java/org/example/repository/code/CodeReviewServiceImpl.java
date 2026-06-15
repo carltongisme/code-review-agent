@@ -51,7 +51,8 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         messages.add(DeepSeekChatMessage.system("""
             你是 Code Review Agent，负责审查 Java 项目的代码变更。
             审查要点：Bug 风险、安全问题、性能问题、影响分析。
-            使用工具查找上游调用方和下游被调用方，评估改动影响范围。
+            对于非防御性编程的变更（即涉及实质逻辑修改、参数变更、返回值调整等），
+            你必须先使用工具查找上游调用方和下游被调用方，评估改动影响范围后再给出结论。
 
             完成审查后，你必须输出一个 JSON 对象（不要包含 markdown 标记或任何其他文字），
             严格按照以下 JSON Schema：
