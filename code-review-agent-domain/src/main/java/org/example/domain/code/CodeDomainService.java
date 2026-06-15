@@ -204,7 +204,7 @@ public class CodeDomainService {
             projectId, filePath, className, null);
         codeRepository.delete(coord);
 
-        callGraphIndex.removeCallersByFilePrefix(projectId, filePath, className);
+        // callGraphIndex.removeCallersByFilePrefix(projectId, filePath, className);
 
         log.info("单文件删除完成: projectId={}, filePath={}", projectId, filePath);
     }
