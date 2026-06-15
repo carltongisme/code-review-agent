@@ -62,6 +62,11 @@ public class CodeDomainService {
      * @return 已存储的代码实体
      */
     public CodeDomain store(String sourceCode, CodeDomainPhysical coordinate) {
+        // 新增：校验源码不为空
+        if (sourceCode == null || sourceCode.isBlank()) {
+              throw new IllegalArgumentException("sourceCode 不能为空");
+        }
+        
         // 1. DeepSeek 语义分析
         String methodPurpose = codeAnalysisService.analyzePurpose(sourceCode);
 
