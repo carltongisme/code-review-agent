@@ -139,6 +139,47 @@ public class GitHubClient {
         }
     }
 
+    /**
+     * 获取 PR 的实际代码 diff（unified diff 格式）。
+     *
+     * @param owner    仓库所有者
+     * @param repo     仓库名
+     * @param prNumber PR 编号
+     * @return 原始 unified diff 字符串，失败返回 null
+     */
+    public String getPullRequestDiff(String owner, String repo, int prNumber) {
+        String url = properties.getApiUrl() + "/repos/" + owner + "/"
+            + repo + "/pulls/" + prNumber;
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Authorization", "Bearer " + properties.getToken())
+            .header("Accept", "application/vnd.github.v3.diff")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .GET()
+            .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request,
+                HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 404) {
+                log.warn("PR 不存在: {}/{} PR#{}", owner, repo, prNumber);
+                return null;
+            }
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("GitHub API 错误: HTTP " + response.statusCode()
+                    + ", body: " + response.body());
+            }
+            return response.body();
+
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("GitHub API 请求失败: " + e.getMessage(), e);
+        }
+    }
+
     /** 封装 POST 请求 */
     private void executePost(String url, Object body) {
         String json = JsonUtils.toJson(body);

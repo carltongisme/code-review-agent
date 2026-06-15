@@ -114,15 +114,26 @@ public class GitHubWebhookController {
         log.info("PR #{}: projectId={}, action={}, {} → {}",
             prNumber, projectId, action, headRef, baseRef);
 
-        // 构建审查输入：PR 标题 + 变更描述 + 来源/目标分支
+        // 构建审查输入：PR 元数据 + 实际代码 diff
+        String[] projectParts = projectId.split("/", 2);
+        String owner = projectParts[0];
+        String repoName = projectParts.length > 1 ? projectParts[1] : "";
+
         StringBuilder diffBuilder = new StringBuilder();
         diffBuilder.append("【PR 标题】").append(prTitle != null ? prTitle : "N/A").append("\n\n");
         diffBuilder.append("【分支】").append(headRef).append(" → ").append(baseRef).append("\n\n");
         if (prBody != null && !prBody.isBlank()) {
             diffBuilder.append("【变更描述】\n").append(prBody).append("\n\n");
         }
-        diffBuilder.append("【Commit SHA】\nhead: ").append(headSha)
-            .append("\nbase: ").append(baseSha).append("\n");
+        // 拉取 GitHub 实际代码 diff
+        try {
+            String realDiff = gitHubClient.getPullRequestDiff(owner, repoName, prNumber);
+            if (realDiff != null && !realDiff.isBlank()) {
+                diffBuilder.append("【代码变更】\n").append(realDiff).append("\n");
+            }
+        } catch (Exception e) {
+            log.warn("获取 PR diff 失败，仅使用元数据: {}", e.getMessage());
+        }
         String diff = diffBuilder.toString();
 
         // 执行 LLM 审查 + 提交到 GitHub
