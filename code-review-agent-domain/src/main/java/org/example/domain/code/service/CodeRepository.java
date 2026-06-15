@@ -62,4 +62,11 @@ public interface CodeRepository {
      * @param projectId      项目 ID，为 null 时不按项目过滤（跨项目搜索）
      */
     List<CodeDomain> searchSimilar(List<Float> queryEmbedding, int limit, String projectId) throws CodeServiceException;
+
+    /**
+     * 返回所有已存储的代码实体（不含 embedding 向量）。
+     * <p>
+     * 用于启动时重建调用图索引等内存结构。
+     */
+    List<CodeDomain> scrollAll() throws CodeServiceException;
 }

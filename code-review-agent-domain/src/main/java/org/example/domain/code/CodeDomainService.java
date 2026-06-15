@@ -1,5 +1,6 @@
 package org.example.domain.code;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.code.domain.CodeDomain;
@@ -53,6 +54,32 @@ public class CodeDomainService {
 
     @Resource
     private CodeReviewSubmitService codeReviewSubmitService;
+
+    /**
+     * 启动时从向量数据库重建调用图索引。
+     */
+    @PostConstruct
+    void rebuildIndex() {
+        try {
+            List<CodeDomain> all = codeRepository.scrollAll();
+            if (all.isEmpty()) {
+                log.info("向量库为空，跳过索引重建");
+                return;
+            }
+            int rebuilt = 0;
+            for (CodeDomain entity : all) {
+                CodeDomainPhysical coord = entity.getCoordinate();
+                List<String> callees = javaCodeParser.extractCalledMethods(entity.getSourceCode());
+                if (callees.isEmpty()) continue;
+                String callerSig = coord.getClassName() + "::" + coord.getMethodSignature();
+                callGraphIndex.addCalls(coord.getProjectId(), coord.getFilePath(), callerSig, callees);
+                rebuilt++;
+            }
+            log.info("调用图索引重建完成: {} 个方法", rebuilt);
+        } catch (Exception e) {
+            log.warn("调用图索引重建失败，需手动全量导入: {}", e.getMessage());
+        }
+    }
 
     /**
      * 处理单个方法：DeepSeek 解析含义 → 阿里云向量化 → Qdrant 存储。

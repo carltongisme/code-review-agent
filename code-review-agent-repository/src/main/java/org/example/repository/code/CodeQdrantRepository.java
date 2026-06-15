@@ -4,10 +4,13 @@ import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections.Distance;
 import io.qdrant.client.grpc.Collections.VectorParams;
 import io.qdrant.client.grpc.Common.Filter;
+import io.qdrant.client.grpc.Common.PointId;
 import io.qdrant.client.grpc.Points.PointStruct;
 import io.qdrant.client.grpc.JsonWithInt;
 import io.qdrant.client.grpc.Points.RetrievedPoint;
 import io.qdrant.client.grpc.Points.ScoredPoint;
+import io.qdrant.client.grpc.Points.ScrollPoints;
+import io.qdrant.client.grpc.Points.ScrollResponse;
 import io.qdrant.client.grpc.Points.SearchPoints;
 import io.qdrant.client.grpc.Points.UpdateResult;
 
@@ -18,6 +21,7 @@ import org.example.domain.code.domain.CodeDomainPhysical;
 import org.example.repository.qdrant.QdrantProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -198,6 +202,42 @@ public class CodeQdrantRepository implements CodeRepository {
             throw new CodeServiceException(
                 "删除向量失败: " + e.getCause().getMessage(), e.getCause());
         }
+    }
+
+    @Override
+    public List<CodeDomain> scrollAll() throws CodeServiceException {
+        ensureCollectionExists();
+        List<CodeDomain> all = new ArrayList<>();
+        PointId offset = null;
+
+        while (true) {
+            ScrollPoints.Builder builder = ScrollPoints.newBuilder()
+                .setCollectionName(properties.getCollectionName())
+                .setWithPayload(enable(true))
+                .setLimit(200);
+
+            if (offset != null) {
+                builder.setOffset(offset);
+            }
+
+            try {
+                ScrollResponse response = qdrantClient.scrollAsync(builder.build()).get();
+                for (RetrievedPoint point : response.getResultList()) {
+                    all.add(mapToEntity(point));
+                }
+                if (!response.hasNextPageOffset()) break;
+                offset = response.getNextPageOffset();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new CodeServiceException("scroll 向量时线程被中断", e);
+            } catch (ExecutionException e) {
+                throw new CodeServiceException(
+                    "scroll 向量失败: " + e.getCause().getMessage(), e.getCause());
+            }
+        }
+
+        log.info("scroll 完成，共 {} 条记录", all.size());
+        return all;
     }
 
     // ── 集合生命周期 ──
