@@ -106,19 +106,32 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     /**
      * 将 LLM JSON 输出反序列化为 {@link CodeReviewResult}。
      * <p>
-     * 处理 LLM 可能包裹的 markdown fence，以及异常 JSON 的降级兜底。
+     * 处理 LLM 可能包裹的 markdown fence（开头或中间），以及异常 JSON 的降级兜底。
      */
     private static CodeReviewResult parseStructured(String jsonText) {
         try {
             String cleaned = jsonText.trim();
-            // 如果 LLM 误包裹了 ```json ... ``` 标记，自动剥离
-            if (cleaned.startsWith("```")) {
-                int contentStart = cleaned.indexOf('\n');
-                int contentEnd = cleaned.lastIndexOf("\n```");
-                if (contentStart >= 0 && contentEnd > contentStart) {
-                    cleaned = cleaned.substring(contentStart, contentEnd).trim();
+
+            // 提取 markdown 代码块中的 JSON（支持开头或中间位置）
+            int fenceStart = cleaned.indexOf("```json");
+            if (fenceStart < 0) fenceStart = cleaned.indexOf("```");
+            if (fenceStart >= 0) {
+                int contentStart = cleaned.indexOf('\n', fenceStart) + 1;
+                int fenceEnd = cleaned.indexOf("\n```", contentStart);
+                if (fenceEnd > contentStart) {
+                    cleaned = cleaned.substring(contentStart, fenceEnd).trim();
                 }
             }
+
+            // 如果仍然不是 JSON 开头，尝试定位第一个 { 到最后一个 }
+            if (!cleaned.startsWith("{")) {
+                int jsonStart = cleaned.indexOf('{');
+                int jsonEnd = cleaned.lastIndexOf('}');
+                if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                    cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+                }
+            }
+
             CodeReviewResult result = JsonUtils.fromJson(cleaned, CodeReviewResult.class);
             if (result != null) {
                 return result;
