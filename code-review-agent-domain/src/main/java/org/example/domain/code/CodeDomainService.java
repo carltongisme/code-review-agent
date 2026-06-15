@@ -78,7 +78,9 @@ public class CodeDomainService {
         // 4. 存储到 Qdrant（projectId 从 coordinate 提取）
         codeRepository.store(entity, coordinate.getProjectId());
 
-        log.info("方法存储完成: {}", coordinate);
+        // 存储后从 Qdrant 确认写入成功
+        codeRepository.searchPhysical(coordinate).orElseThrow(() -> new CodeServiceException("存储校验失败: " + coordinate));
+        log.info("方法存储完成并校验: {}", coordinate);
         return entity;
     }
 
