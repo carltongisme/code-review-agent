@@ -52,8 +52,8 @@ public class CodeReviewServiceImpl implements CodeReviewService {
             你是 Code Review Agent，负责审查 Java 项目的代码变更。
             审查要点：Bug 风险、安全问题、性能问题、影响分析。
 
-            当 diff 中包含实质性逻辑修改时，使用 lookup_callers / lookup_callees 工具
-            查询上下游调用关系，将有影响的方法引用到审查意见中。
+            上下文中已包含【上下游影响预分析】，直接引用即可，无需调用工具查询。
+            只有当预分析信息不足时，才使用 lookup_callers / lookup_callees 补充。
 
             完成审查后，你必须输出一个 JSON 对象（不要包含 markdown 标记或任何其他文字），
             严格按照以下 JSON Schema：
@@ -70,10 +70,14 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         List<Map<String, Object>> tools = FunctionCallToolsBuilder.build(toolbox);
 
         // 多轮 Function Call 交互
+        String lastContent = "";
         for (int round = 0; round < MAX_TOOL_ROUNDS; round++) {
             DeepSeekResponse response = deepSeekClient.chatWithTools(messages, tools);
             var choice = response.getChoices().getFirst();
             var msg = choice.getMessage();
+            if (msg.getContent() != null && !msg.getContent().isBlank()) {
+                lastContent = msg.getContent();
+            }
 
             // LLM 完成审查：从 JSON 输出直接反序列化
             if ("stop".equals(choice.getFinishReason()) && msg.getToolCalls() == null) {
@@ -102,7 +106,11 @@ public class CodeReviewServiceImpl implements CodeReviewService {
             return parseStructured(fallbackText);
         }
 
-        return new CodeReviewResult(CodeReviewResult.Status.REJECTED.name(), "审查超时：未在 " + MAX_TOOL_ROUNDS + " 轮内完成", CodeReviewResult.RiskLevel.HIGH.name());
+        String timeoutMsg = "审查超时：未在 " + MAX_TOOL_ROUNDS + " 轮内完成。\n";
+        if (!lastContent.isBlank()) {
+            timeoutMsg += "以下是 LLM 在最后一轮的分析内容：\n" + lastContent;
+        }
+        return new CodeReviewResult(CodeReviewResult.Status.REJECTED.name(), timeoutMsg, CodeReviewResult.RiskLevel.HIGH.name());
     }
 
     /**
