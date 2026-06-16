@@ -136,6 +136,12 @@ public class GitHubWebhookController {
         }
         String diff = diffBuilder.toString();
 
+        // 预计算上下游影响分析
+        String impact = codeDomainService.buildImpactContext(projectId, diff);
+        if (!impact.isEmpty()) {
+            diff = impact + "\n" + diff;
+        }
+
         // 执行 LLM 审查 + 提交到 GitHub
         CodeReviewResult result = codeDomainService.reviewAndSubmit(projectId, prNumber, diff);
 

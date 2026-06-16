@@ -19,7 +19,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -79,6 +83,43 @@ public class CodeDomainService {
         } catch (Exception e) {
             log.warn("调用图索引重建失败，需手动全量导入: {}", e.getMessage());
         }
+    }
+
+    private static final Pattern DIFF_FILE_PATTERN = Pattern.compile("^\\+\\+\\+ b/(.+\\.java)$", Pattern.MULTILINE);
+
+    /**
+     * 预计算 PR 上下游影响分析。
+     * 从 unified diff 中提取 Java 文件路径，查找每个方法的上游调用方，格式化后供 LLM 参考。
+     */
+    public String buildImpactContext(String projectId, String prDiff) {
+        if (prDiff == null || prDiff.isBlank()) return "";
+        Set<String> filePaths = new HashSet<>();
+        Matcher m = DIFF_FILE_PATTERN.matcher(prDiff);
+        while (m.find()) {
+            filePaths.add(m.group(1));
+        }
+        if (filePaths.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder("【上下游影响预分析】\n");
+        int found = 0;
+        for (CodeDomain entity : codeRepository.scrollAll()) {
+            CodeDomainPhysical coord = entity.getCoordinate();
+            if (!coord.getProjectId().equals(projectId) || !filePaths.contains(coord.getFilePath())) {
+                continue;
+            }
+            String sig = coord.getClassName() + "::" + coord.getMethodSignature();
+            Set<String> callers = callGraphIndex.findCallers(projectId, sig);
+            List<String> callees = javaCodeParser.extractCalledMethods(entity.getSourceCode());
+            sb.append(coord.getFilePath()).append(" 中 ").append(sig).append(":\n");
+            if (!callers.isEmpty()) {
+                sb.append("  上游调用方: ").append(String.join(", ", callers)).append("\n");
+            }
+            if (!callees.isEmpty()) {
+                sb.append("  下游调用: ").append(String.join(", ", callees)).append("\n");
+            }
+            found++;
+        }
+        return found > 0 ? sb.toString() : "";
     }
 
     /**
